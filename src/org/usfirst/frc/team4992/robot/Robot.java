@@ -76,6 +76,7 @@ public class Robot extends IterativeRobot {
 	public boolean yButton = false;
 	int autoSteps;
 	int ticks = 0;
+	boolean run = true;
 	
 	//air stuff
 	DoubleSolenoid arms;
@@ -118,28 +119,39 @@ public class Robot extends IterativeRobot {
     	
     	
     }
-	boolean run = true;
+    
 	public void testInit() {
 		run = true;
-		motorLeftFront.setEncPosition(0);
+		motorRightBack.setEncPosition(0);
+		while(motorRightBack.getEncPosition()<1440*2){
+			//ticks += motorLeftFront.getEncPosition();
+			System.out.println( motorRightBack.getEncPosition() );
+			driveRobot.arcadeDrive(-0.5,0);	
+			//System.out.println(ticks);
+		}
+		driveRobot.arcadeDrive(0,0);	
 	}
+
     public void testPeriodic() {
+    	
+    	//System.out.println( "Encoder " + motorRightBack.getEncPosition() );
+    	/*
     if (run){
-    	ticks = motorLeftFront.getEncPosition();
-    		if(ticks<1440*10){
-    			driveRobot.arcadeDrive(0.8,0);	
-    		}
-    		else{
-    			motorLeftFront.setEncPosition(0);
-    			run = false;
-    		}
+    	while(motorLeftFront.getEncPosition()<1440*3){
+			//ticks += motorLeftFront.getEncPosition();
+			System.out.println( motorLeftFront.getEncPosition() );
+			driveRobot.arcadeDrive(0.5,0);	
+			//System.out.println(ticks);
+		}
+    	run = false;
+    	
     }
     else{
     	System.out.println ("Right Pos: " + motorRightBack.getEncPosition() + "/t   Right Vel: " +  motorRightBack.getEncVelocity());
     	System.out.println ("Left Pos: "+motorLeftFront.getEncPosition()  + "/t  Left Vel: " +  motorLeftFront.getEncVelocity() );
     	driveRobot.arcadeDrive(0,0);	
     }
-    		
+    	*/	
         	
      }
     public void autonomousInit() {
@@ -150,7 +162,7 @@ public class Robot extends IterativeRobot {
 		COG_SIZE = visionTable.getNumber("COG_BOX_SIZE", 0.0);
 		COG_SIZEThresh = 100;
     	System.out.println("COG X:" + COGX + "\tCOG Y" + COG_Y + "\tCOG SIZE" + COG_SIZE);
-    	
+    	run = true;
     }
 
     public void autonomousPeriodic() {
@@ -280,6 +292,26 @@ public class Robot extends IterativeRobot {
     	}//end of if-else
     }//end of switchReverseDrive method
     
+	public void driveToDist(double meters){
+		
+    	double rotations = meters*2.0833;
+		while(ticks<1440*rotations){
+			ticks = motorLeftFront.getEncPosition();
+			System.out.println( motorLeftFront.getEncPosition() );
+			driveRobot.arcadeDrive(0.5,0);	
+			System.out.println(ticks);
+		}
+		/*
+		  double distance = meter*2992;
+		  while(ticks<distance){
+			driveRobot.arcadeDrive(0.5,0);	
+			ticks = motor
+			LeftFront.getEncPosition();
+		}
+		 */
+		driveRobot.arcadeDrive(0,0);	
+	}
+	
     //Sets the rumble of the joystick - smallRotateVal is the rumble for the left side - largeRotateVal is for the right side
     public void rumbleJoystick(float smallRumbleVal,float largeRumbleVal){
     	OI.stick.setRumble(RumbleType.kLeftRumble, smallRumbleVal);
