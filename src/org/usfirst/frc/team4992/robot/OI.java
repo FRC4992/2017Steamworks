@@ -17,6 +17,7 @@ public class OI {
 	public static JoystickButton buttonB = new JoystickButton(stick, 2); //NOT SURE ABOUT THE NUMBER
 	public static JoystickButton leftBumper = new JoystickButton(stick, 5);
 	public static JoystickButton rightBumper = new JoystickButton(stick, 6);
+	public static JoystickButton leftStick = new JoystickButton(stick, 10);
 	
     //// CREATING BUTTONS
     // One type of button is a joystick button which is any button on a joystick.

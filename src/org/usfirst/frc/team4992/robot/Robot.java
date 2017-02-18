@@ -3,6 +3,7 @@ package org.usfirst.frc.team4992.robot;
 
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
+import edu.wpi.first.wpilibj.CANSpeedController.ControlMode;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -21,6 +22,7 @@ import org.usfirst.frc.team4992.robot.subsystems.Drive;
 import org.usfirst.frc.team4992.robot.subsystems.ExampleSubsystem;
 import org.usfirst.frc.team4992.robot.subsystems.GearLifter;
 import com.ctre.CANTalon;
+import com.ctre.CANTalon.FeedbackDevice;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -45,6 +47,7 @@ public class Robot extends IterativeRobot {
 	//senors and random stuff
     Command autonomousCommand;
     UsbCamera camera;
+    UsbCamera secondCamera;
     NetworkTable visionTable;
     Compressor comp;
     double COGX;
@@ -72,6 +75,7 @@ public class Robot extends IterativeRobot {
 	public boolean xButton = false;
 	public boolean yButton = false;
 	int autoSteps;
+	int ticks = 0;
 	
 	//air stuff
 	DoubleSolenoid arms;
@@ -95,6 +99,7 @@ public class Robot extends IterativeRobot {
     	motorLeftFront = new CANTalon(RobotMap.frontLeftMotor);
     	motorRightFront = new CANTalon(RobotMap.frontRightMotor);
     	climberMotor = new CANTalon(RobotMap.climberGear);
+
     	
     	driveRobot = new RobotDrive(motorLeftFront,motorLeftBack,motorRightFront,motorRightBack);
     	motorLeftBackTest = new Talon(1);
@@ -108,18 +113,37 @@ public class Robot extends IterativeRobot {
     	
     	//Camera setup for vision
     	camera = CameraServer.getInstance().startAutomaticCapture();
+    	secondCamera = CameraServer.getInstance().startAutomaticCapture("cam1", 1);
     	MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(),1181);
     	
     	
     }
-	
+	boolean run = true;
+	public void testInit() {
+		run = true;
+		motorLeftFront.setEncPosition(0);
+	}
     public void testPeriodic() {
-    	comp.setClosedLoopControl(true);
-    	climberMotor.set(0.3);
+    if (run){
+    	ticks = motorLeftFront.getEncPosition();
+    		if(ticks<1440*10){
+    			driveRobot.arcadeDrive(0.8,0);	
+    		}
+    		else{
+    			motorLeftFront.setEncPosition(0);
+    			run = false;
+    		}
+    }
+    else{
+    	System.out.println ("Right Pos: " + motorRightBack.getEncPosition() + "/t   Right Vel: " +  motorRightBack.getEncVelocity());
+    	System.out.println ("Left Pos: "+motorLeftFront.getEncPosition()  + "/t  Left Vel: " +  motorLeftFront.getEncVelocity() );
+    	driveRobot.arcadeDrive(0,0);	
+    }
+    		
+        	
      }
     public void autonomousInit() {
     	autoSteps = 0;
-    	
     	visionTable= NetworkTable.getTable("RoboRealm");
 		COGX = visionTable.getNumber("COG_X", 0.0);
     	COG_Y = visionTable.getNumber("COG_Y", 0.0);
@@ -152,15 +176,27 @@ public class Robot extends IterativeRobot {
     public void teleopInit() {
     	driveRobot.arcadeDrive(0,0);
     	comp.clearAllPCMStickyFaults();
-    	comp.stop();
-    }
+    	comp.setClosedLoopControl(true);
+    	motorLeftFront.setEncPosition(0);
+    	motorRightFront.setEncPosition(0);
+    	//motorLeftFront.configEncoderCodesPerRev(1440);
+    	//motorRightBack.configEncoderCodesPerRev(1440);
+    	//---------------------------Z
 
+    }
+    boolean leftStick = false;
     public void teleopPeriodic() {
+    	//comp.stop();
+
+    	//---------------------------------------------
+    	System.out.println ("Right Pos: " + motorRightBack.getEncPosition() + "/t   Right Vel: " +  motorRightBack.getEncVelocity());
+    	System.out.println ("Left Pos: "+motorLeftFront.getEncPosition()  + "/t  Left Vel: " +  motorLeftFront.getEncVelocity() );
     	
     	if (OI.rightBumper.get() && OI.leftBumper.get()){
     		climberMotor.set(1);
     	} else if(OI.leftBumper.get()){
     		climberMotor.set(-1);
+    		
     	} else {
     		climberMotor.set(0);
 
@@ -205,10 +241,8 @@ public class Robot extends IterativeRobot {
     		//System.out.println("fast");
     	} else {
     		drivePrefix =0.3;
-    		System.out.println("slow");
     	}
     	
-    	System.out.println(OI.leftBumper.get());
     	if(!reverseDriveActive){
     		driveRobot.arcadeDrive(OI.stick.getRawAxis(1)*drivePrefix,-OI.stick.getRawAxis(0)*drivePrefix );
     	} else {
