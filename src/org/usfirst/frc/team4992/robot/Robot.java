@@ -322,7 +322,7 @@ public class Robot extends IterativeRobot {
 
 		// Button Y (Gear Gripping Arms)
 		// Changes values of armsOn iff plateOn is true (ie extended)
-		if (OI.buttonY.get() && !yButton && !plateOn) {
+		if (OI.buttonY.get() && !yButton && plateOn) {
 			System.out.println("Y");
 			armsOn = !armsOn;
 			yButton = true;
