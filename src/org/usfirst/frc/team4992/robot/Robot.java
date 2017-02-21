@@ -90,7 +90,22 @@ public class Robot extends IterativeRobot {
 	boolean armsOn = false;
 	public static DoubleSolenoid plate;
 	boolean plateOn = false;
-	//NetworkTable visionTable; 
+	//NetworkTable visionTable;
+	
+    boolean leftStick = false;
+
+    
+    //Variables and constants to control the climber
+    double maxClimberCurrent = 0;
+    double[] climberCurrent = new double[3];
+    boolean climberEnable = false;
+    boolean allowClimberDown = false;
+    
+    //Debug Statement control
+    static boolean DEBUG_DRIVE = false;
+    static boolean DEBUG_CLIMBER = true;
+    
+    
     
   //------------------------FRC methods-------------------------
     public void robotInit() {
@@ -238,24 +253,73 @@ public class Robot extends IterativeRobot {
     	//motorLeftFront.configEncoderCodesPerRev(1440);
     	//motorRightBack.configEncoderCodesPerRev(1440);
     	//---------------------------Z
+    	
+    	//Climber Variable Initialization
+    	maxClimberCurrent = 0;
+        climberCurrent[0] = climberCurrent[1] = climberCurrent[2] = 0;
+        climberEnable = true;
+        allowClimberDown = false;
 
     }
-    boolean leftStick = false;
+    
+
+    
     public void teleopPeriodic() {
     	//comp.stop();
 
-    	//---------------------------------------------
-    	System.out.println ("Right Pos: " + motorRightBack.getEncPosition() + "/t   Right Vel: " +  motorRightBack.getEncVelocity());
-    	System.out.println ("Left Pos: "+motorLeftFront.getEncPosition()  + "/t  Left Vel: " +  motorLeftFront.getEncVelocity() );
+  	
+  
+    	//BEGIN Climber Code
     	
-    	if (OI.rightBumper.get() && OI.leftBumper.get()){
+    	//If both triggers are pressed and climber enabled and climber allowed backwards
+    	//Then drive climber backwards
+    	if (OI.rightBumper.get() && OI.leftBumper.get() && climberEnable && allowClimberDown){
     		climberMotor.set(1);
-    	} else if(OI.leftBumper.get()){
-    		climberMotor.set(-1);
-    		
+    	} 
+    	//If left trigger and climber enable, then activate climber
+    	else if(OI.leftBumper.get() && climberEnable){
+
+    		//Calculate average climber current over 3 ticks
+       		double tempCurrent = climberMotor.getOutputCurrent();
+       		climberCurrent[2] = climberCurrent[1];
+       		climberCurrent[1] = climberCurrent[0];
+       		climberCurrent[0] = tempCurrent;
+       		double avgCurrent = (climberCurrent[2] + climberCurrent[1] + climberCurrent[0])/3;
+        		
+        	//DEBUG - Find max climber current	
+       		if (tempCurrent > maxClimberCurrent) { 
+       			maxClimberCurrent = tempCurrent;
+       			if (DEBUG_CLIMBER) { System.out.println("maxClimberCurrent: "+ maxClimberCurrent); }
+        	} 
+        	
+       		//DEBUG Output climber debug statements
+       		if (DEBUG_CLIMBER) {
+       			System.out.println("Current: "+ tempCurrent);
+        		System.out.println("AVG Current: "+ avgCurrent);
+        		//System.out.println(" Voltage: " + climberMotor.getOutputVoltage());
+        	
+       		}  
+
+       		//THIS IS THE CURRENT CUT OFF LIMIT
+       		//Turn off motor if avg current threshold reached
+       		if (avgCurrent >= RobotMap.currentThreshHold) {
+       			climberMotor.set(0);
+       			climberEnable = false;
+       		}//otherwise turn on climber 
+       		else {
+        		climberMotor.set(-1);
+       		}
+       		
+    	//Turn off the climber	
     	} else {
     		climberMotor.set(0);
-
+    	}
+    	
+    	//END Climber Code
+    	
+    	if (DEBUG_DRIVE) {
+    		System.out.println ("Right Pos: " + motorRightBack.getEncPosition() + "/t   Right Vel: " +  motorRightBack.getEncVelocity());
+    		System.out.println ("Left Pos: "+motorLeftFront.getEncPosition()  + "/t  Left Vel: " +  motorLeftFront.getEncVelocity() );
     	}
     	
     	//A button (reverse drive)
