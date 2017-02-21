@@ -4,6 +4,7 @@ package org.usfirst.frc.team4992.robot;
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.CANSpeedController.ControlMode;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -13,10 +14,13 @@ import edu.wpi.first.wpilibj.Jaguar;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.command.*;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
+import org.usfirst.frc.team4992.robot.commands.AutoLineUp;
 import org.usfirst.frc.team4992.robot.commands.Climber;
+import org.usfirst.frc.team4992.robot.commands.DropGear;
 import org.usfirst.frc.team4992.robot.subsystems.Climb;
 import org.usfirst.frc.team4992.robot.subsystems.Drive;
 import org.usfirst.frc.team4992.robot.subsystems.ExampleSubsystem;
@@ -40,21 +44,24 @@ public class Robot extends IterativeRobot {
 	public static final Drive drive = new Drive();
 	public static final GearLifter gear = new GearLifter();
 	public static OI oi;	
-	
-	protected static final int ImageWidth = 320;
+	//
+	public static final int ImageWidth = 320;
 	protected static final int ImageHeight = 240;
-	
+	//
+	static ADXRS450_Gyro gyro;
+	Ultrasonic ultra;
 	//senors and random stuff
     Command autonomousCommand;
     UsbCamera camera;
     UsbCamera secondCamera;
     NetworkTable visionTable;
     Compressor comp;
-    double COGX;
+    public static double COG_X;
 	double COG_Y;
-	double COG_SIZE;
+	public static double COG_SIZE;
 	double COG_SIZEThresh;
     
+	
     //Motor controllers
     CANTalon motorLeftBack; 
 	CANTalon motorRightBack;
@@ -79,15 +86,15 @@ public class Robot extends IterativeRobot {
 	boolean run = true;
 	
 	//air stuff
-	DoubleSolenoid arms;
+	public static DoubleSolenoid arms;
 	boolean armsOn = false;
-	DoubleSolenoid plate;
+	public static DoubleSolenoid plate;
 	boolean plateOn = false;
 	//NetworkTable visionTable; 
     
   //------------------------FRC methods-------------------------
     public void robotInit() {
-
+    	gyro = new ADXRS450_Gyro();
     	oi = new OI();
     	comp = new Compressor();
     	comp.clearAllPCMStickyFaults();
@@ -116,11 +123,15 @@ public class Robot extends IterativeRobot {
     	camera = CameraServer.getInstance().startAutomaticCapture();
     	secondCamera = CameraServer.getInstance().startAutomaticCapture("cam1", 1);
     	MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(),1181);
-    	
+    	visionTable= NetworkTable.getTable("RoboRealm");
+    	ultra = new Ultrasonic (1, 2);
+    	ultra.setAutomaticMode(true);
     	
     }
     
 	public void testInit() {
+		
+		/*
 		run = true;
 		motorRightBack.setEncPosition(0);
 		while(motorRightBack.getEncPosition()<1440*2){
@@ -130,10 +141,43 @@ public class Robot extends IterativeRobot {
 			//System.out.println(ticks);
 		}
 		driveRobot.arcadeDrive(0,0);	
+		*/
 	}
 
     public void testPeriodic() {
-    	
+    	OI.buttonB.whenPressed(new DropGear());
+    	double leftPower = 0.0;
+    	double rightPower =  0.0;
+    	 while(OI.buttonA.get() ){
+    		 //System.out.println("Percentage:" + (Robot.COG_X- Robot.ImageWidth/4)/Robot.ImageWidth/4 );
+    		 COG_X = visionTable.getNumber("COG_X", 0.0);
+    		 if(Robot.COG_X> Robot.ImageWidth/4 ){
+    			 leftPower = 0.2;
+    			 //leftPower = 0.5 * ( (Robot.ImageHeight/4) /(Robot.COG_X) ) - 1;
+    	    	} else if(Robot.COG_X< Robot.ImageWidth/4 ){
+    	    		rightPower = 0.2;
+    	    		//rightPower = 0.5 * (1 - (COG_X/ImageWidth) );
+    	    	}
+    	    	driveRobot.arcadeDrive( 0.4 , rightPower - leftPower );
+    	    	System.out.println("COGX:" +COG_X);
+    	    	System.out.println("Half of image widht:" +ImageWidth/4);
+    	    	leftPower = 0.0;
+       		 	leftPower = 0.0;
+    	 }
+    	 System.out.println("inches"+ ultra.getRangeInches() );
+    	 if (ultra.getRangeInches() < 30){
+    		 System.out.println("Doing Shit");
+    		 Robot.plate.set(DoubleSolenoid.Value.kReverse);
+    		 Timer.delay(100);
+    		 Robot.arms.set(DoubleSolenoid.Value.kReverse);
+    		 Timer.delay(100);
+    		 Robot.plate.set(DoubleSolenoid.Value.kForward);
+    		 Timer.delay(100);
+    		 Robot.driveRobot.arcadeDrive(-0.5,0);
+    		 Timer.delay(500);
+    		 Robot.driveRobot.arcadeDrive(0,0);
+    	 }
+    	 
     	//System.out.println( "Encoder " + motorRightBack.getEncPosition() );
     	/*
     if (run){
@@ -156,12 +200,12 @@ public class Robot extends IterativeRobot {
      }
     public void autonomousInit() {
     	autoSteps = 0;
-    	visionTable= NetworkTable.getTable("RoboRealm");
-		COGX = visionTable.getNumber("COG_X", 0.0);
+    	
+		COG_X = visionTable.getNumber("COG_X", 0.0);
     	COG_Y = visionTable.getNumber("COG_Y", 0.0);
 		COG_SIZE = visionTable.getNumber("COG_BOX_SIZE", 0.0);
 		COG_SIZEThresh = 100;
-    	System.out.println("COG X:" + COGX + "\tCOG Y" + COG_Y + "\tCOG SIZE" + COG_SIZE);
+    	System.out.println("COG X:" + COG_X + "\tCOG Y" + COG_Y + "\tCOG SIZE" + COG_SIZE);
     	run = true;
     }
 
@@ -256,9 +300,9 @@ public class Robot extends IterativeRobot {
     	}
     	
     	if(!reverseDriveActive){
-    		driveRobot.arcadeDrive(OI.stick.getRawAxis(1)*drivePrefix,-OI.stick.getRawAxis(0)*drivePrefix );
+    		driveRobot.arcadeDrive(OI.stick.getRawAxis(1)*drivePrefix,OI.stick.getRawAxis(0)*drivePrefix );
     	} else {
-    		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1)*drivePrefix ,OI.stick.getRawAxis(0)*drivePrefix );
+    		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1)*drivePrefix ,-OI.stick.getRawAxis(0)*drivePrefix );
     	}
     	
     	//piston stuff
@@ -283,6 +327,39 @@ public class Robot extends IterativeRobot {
     
     
     //-------------Other non FRC provided methods-------------------------
+    public static boolean goToHeading(double target, double speed) {
+
+		int hedge = 10;// amount of degrees to stop short of turning
+		// System.out.println(gyro.getAngle());
+		double heading = (gyro.getAngle() % 360);//Makes sure the gyro has an angle between 0-360
+		if (heading < 0) {
+			heading += 360;//Adds 360 if angle is negative
+		}
+
+		if (Math.abs(heading) > 360) {
+			heading = heading % 360;
+		}
+
+		int turn = (int) (target - heading);
+		if (turn > 180) {
+			turn -= 360;
+		} else if (turn < -180) {
+			turn += 360;
+		}
+		if (turn > 0 && turn < 180) {
+			driveRobot.arcadeDrive(0., -speed);
+			//currentDir = -1;
+		} else {
+			driveRobot.arcadeDrive(0., speed);
+		}
+
+		return (Math.abs(turn) >= hedge);
+
+	}
+
+    
+    
+    
     
     public boolean switchReverseDrive(boolean currentReverseDriveBooleanValue){//use this method by setting the revsere boolean to this method and put itself in the parameter EXAMPLE: reverseOn = switchReverseDrive(reverseOn); 
     	if(currentReverseDriveBooleanValue){

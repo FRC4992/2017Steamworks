@@ -11,10 +11,10 @@ import edu.wpi.first.wpilibj.buttons.JoystickButton;
 public class OI {
 	public static XboxController xStick = new XboxController(0);
 	public static Joystick stick = new Joystick(0);
-	public static JoystickButton buttonX = new JoystickButton(stick, 3); //NOT SURE ABOUT THE NUMBER
-	public static JoystickButton buttonY = new JoystickButton(stick, 4); //NOT SURE ABOUT THE NUMBER
-	public static JoystickButton buttonA = new JoystickButton(stick, 1); //NOT SURE ABOUT THE NUMBER
-	public static JoystickButton buttonB = new JoystickButton(stick, 2); //NOT SURE ABOUT THE NUMBER
+	public static JoystickButton buttonX = new JoystickButton(stick, 3); //SURE ABOUT THE NUMBER
+	public static JoystickButton buttonY = new JoystickButton(stick, 4); //SURE ABOUT THE NUMBER
+	public static JoystickButton buttonA = new JoystickButton(stick, 1); //SURE ABOUT THE NUMBER
+	public static JoystickButton buttonB = new JoystickButton(stick, 2); //SURE ABOUT THE NUMBER
 	public static JoystickButton leftBumper = new JoystickButton(stick, 5);
 	public static JoystickButton rightBumper = new JoystickButton(stick, 6);
 	public static JoystickButton leftStick = new JoystickButton(stick, 10);
