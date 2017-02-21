@@ -99,7 +99,7 @@ public class Robot extends IterativeRobot {
     double maxClimberCurrent = 0;
     double[] climberCurrent = new double[3];
     boolean climberEnable = false;
-    boolean allowClimberDown = false;
+    boolean allowClimberDown = true;
     
     //Debug Statement control
     static boolean DEBUG_DRIVE = false;
@@ -138,7 +138,9 @@ public class Robot extends IterativeRobot {
     	camera = CameraServer.getInstance().startAutomaticCapture();
     	secondCamera = CameraServer.getInstance().startAutomaticCapture("cam1", 1);
     	MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(),1181);
+
     	visionTable= NetworkTable.getTable("RoboRealm");
+
     	ultra = new Ultrasonic (1, 2);
     	ultra.setAutomaticMode(true);
     	
@@ -383,9 +385,6 @@ public class Robot extends IterativeRobot {
     	}
     	
 
-
-    	
-    	
     }
     
     

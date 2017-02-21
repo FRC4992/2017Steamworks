@@ -17,10 +17,11 @@ public class Climber extends Command {
 	CANTalon motorClimber;
 	boolean hasHit;
 	int motorPrefix;
-    public Climber() {
+    
+    
+	public Climber() {
         // Use requires() here to declare subsystem dependencies
-    	requires(Robot.objClimb);
-    	
+    	requires(Robot.objClimb);    	
     }
 
     // Called just before this Command runs the first time
@@ -41,8 +42,12 @@ public class Climber extends Command {
     		motorPrefix  = 0;
     	}
     	
+    	
+    	//Print motor current draw if debugging is on
+
+    	
     	//Moves the motor unless it is drawing a lot of current(aka it is hitting the top
-    	if(motorClimber.getOutputCurrent()< RobotMap.currentThreshHold && !hasHit){
+    	if(motorClimber.getOutputCurrent() < RobotMap.currentThreshHold && !hasHit){
     		motorClimber.set(motorPrefix);
     	} else if(motorPrefix == -1) {
     		motorClimber.set(motorPrefix);
@@ -51,6 +56,7 @@ public class Climber extends Command {
     		Timer.delay(0.05);
     		hasHit = true;
     	}
+
     }
 
     // Make this return true when this Command no longer needs to run execute()
