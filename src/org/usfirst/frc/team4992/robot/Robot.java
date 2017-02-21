@@ -188,6 +188,12 @@ public class Robot extends IterativeRobot {
 			Timer.delay(500);
 			Robot.driveRobot.arcadeDrive(0, 0);
 		}
+		//Climber motor contorls
+		if (OI.rightBumper.get() && OI.leftBumper.get() && climberEnable && allowClimberDown) {
+			climberMotor.set(1);
+		} else if(OI.leftBumper.get() ){
+			climberMotor.set(-1);
+		}
 
 	}
 
@@ -231,15 +237,12 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() {
 		// comp.stop();
 		// BEGIN Climber Code
-
+		System.out.println(OI.stick.getPOV() );
 		// If both triggers are pressed and climber enabled and climber allowed
 		// backwards
 		// Then drive climber backwards
-		if (OI.rightBumper.get() && OI.leftBumper.get() && climberEnable && allowClimberDown) {
-			climberMotor.set(1);
-		}
 		// If left trigger and climber enable, then activate climber
-		else if (OI.leftBumper.get() && climberEnable) {
+		if (OI.leftBumper.get() && climberEnable) {
 
 			// Calculate average climber current over 3 ticks
 			double tempCurrent = climberMotor.getOutputCurrent();
@@ -288,7 +291,8 @@ public class Robot extends IterativeRobot {
 			System.out.println("Left Pos: " + motorLeftFront.getEncPosition() + "/t  Left Vel: "
 					+ motorLeftFront.getEncVelocity());
 		}
-
+		
+		//-----------------Start of Buttom----------------------------
 		// A button (reverse drive)
 		if (OI.buttonA.get() && !aButton) {
 			System.out.println("A");
@@ -325,15 +329,19 @@ public class Robot extends IterativeRobot {
 		} else if (!OI.buttonY.get()) {
 			yButton = false;
 		}
+		//The POV
+    	if(OI.stick.getPOV() == 0){
+    		drivePrefix = 0.25;
+    	} else if(OI.stick.getPOV() == 90){
+    		drivePrefix = 0.5;
+    	} else if(OI.stick.getPOV() == 180){
+    		drivePrefix = 0.75;
+    	} else if(OI.stick.getPOV() == 270){
+    		drivePrefix = 1;
+    	}
+    	//---------------End of button ------------------
 
 		// Sets the controls and stuff based off the booleans which are switched
-		// above
-		if (!slowDrive) {
-			drivePrefix = 1;
-			// System.out.println("fast");
-		} else {
-			drivePrefix = 0.3;
-		}
 
 		if (!reverseDriveActive) {
 			driveRobot.arcadeDrive(OI.stick.getRawAxis(1) * drivePrefix, OI.stick.getRawAxis(0) * drivePrefix);
