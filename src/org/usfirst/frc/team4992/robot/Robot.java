@@ -85,7 +85,7 @@ public class Robot extends IterativeRobot {
 	int ticks = 0;
 	boolean run = true;
 	
-	//air stuff
+	//Pneumatic Variables
 	public static DoubleSolenoid arms;
 	boolean armsOn = false;
 	public static DoubleSolenoid plate;
@@ -340,18 +340,22 @@ public class Robot extends IterativeRobot {
     	} else if (!OI.buttonB.get() ){
     		bButton = false;
     	}
+    	
     	//Button x (plate for the arms)
+    	//Changes values of plateOn every time button is pressed
     	if(OI.buttonX.get() && !xButton ){
     		System.out.println("X");
-    		plateOn= switchReverseDrive(plateOn);
+    		plateOn= !plateOn;
     		xButton = true;
     	} else if (!OI.buttonX.get() ){
     		xButton = false;
     	}
     	
-    	if(OI.buttonY.get() && !yButton ){
+    	//Button Y (Gear Gripping Arms)
+    	//Changes values of armsOn iff plateOn is true (ie extended)
+    	if(OI.buttonY.get() && !yButton && !plateOn){
     		System.out.println("Y");
-    		armsOn= switchReverseDrive(armsOn);
+    		armsOn= !armsOn;
     		yButton = true;
     	} else if (!OI.buttonY.get() ){
     		yButton = false;
@@ -371,6 +375,7 @@ public class Robot extends IterativeRobot {
     		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1)*drivePrefix ,-OI.stick.getRawAxis(0)*drivePrefix );
     	}
     	
+    	//BEGIN Pneumatic Code
     	//piston stuff
     	if(plateOn){
     		plate.set(DoubleSolenoid.Value.kForward);
@@ -383,6 +388,7 @@ public class Robot extends IterativeRobot {
     	} else {
     		arms.set(DoubleSolenoid.Value.kReverse);
     	}
+    	//END Pneumatic Code
     	
 
     }
