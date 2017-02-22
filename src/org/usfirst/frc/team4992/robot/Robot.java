@@ -3,7 +3,6 @@ package org.usfirst.frc.team4992.robot;
 
 import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
-import edu.wpi.first.wpilibj.CANSpeedOI.stick.ControlMode;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
@@ -113,6 +112,8 @@ public class Robot extends IterativeRobot {
 	// ------------------------FRC methods-------------------------
 	public void robotInit() {
 		gyro = new ADXRS450_Gyro();
+		gyro.calibrate();
+		gyro.reset();
 		oi = new OI();
 		comp = new Compressor();
 		comp.clearAllPCMStickyFaults();
@@ -188,10 +189,10 @@ public class Robot extends IterativeRobot {
 			Timer.delay(500);
 			Robot.driveRobot.arcadeDrive(0, 0);
 		}
-		//Climber motor contorls
+		// Climber motor contorls
 		if (OI.rightBumper.get() && OI.leftBumper.get() && climberEnable && allowClimberDown) {
 			climberMotor.set(1);
-		} else if(OI.leftBumper.get() ){
+		} else if (OI.leftBumper.get()) {
 			climberMotor.set(-1);
 		}
 
@@ -225,7 +226,8 @@ public class Robot extends IterativeRobot {
 		motorLeftFront.setEncPosition(0);
 		motorRightFront.setEncPosition(0);
 		// ---------------------------Z
-
+		gyro.reset();
+		gyro.calibrate();
 		// Climber Variable Initialization
 		maxClimberCurrent = 0;
 		climberCurrent[0] = climberCurrent[1] = climberCurrent[2] = 0;
@@ -235,6 +237,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void teleopPeriodic() {
+		drive();
 		// comp.stop();
 		// BEGIN Climber Code
 		System.out.println(OI.stick.getPOV());
@@ -291,8 +294,8 @@ public class Robot extends IterativeRobot {
 			System.out.println("Left Pos: " + motorLeftFront.getEncPosition() + "/t  Left Vel: "
 					+ motorLeftFront.getEncVelocity());
 		}
-		
-		//-----------------Start of Buttom----------------------------
+
+		// -----------------Start of Buttom----------------------------
 		// A button (reverse drive)
 		if (OI.buttonA.get() && !aButton) {
 			System.out.println("A");
@@ -329,25 +332,21 @@ public class Robot extends IterativeRobot {
 		} else if (!OI.buttonY.get()) {
 			yButton = false;
 		}
-		//The POV
-    	if(OI.stick.getPOV() == 0){
-    		drivePrefix = 0.25;
-    	} else if(OI.stick.getPOV() == 90){
-    		drivePrefix = 0.5;
-    	} else if(OI.stick.getPOV() == 180){
-    		drivePrefix = 0.75;
-    	} else if(OI.stick.getPOV() == 270){
-    		drivePrefix = 1;
-    	}
-    	//---------------End of button ------------------
-
-		        
-    	goToAbsAngle ();
-		if (!reverseDriveActive) {
-			driveRobot.arcadeDrive(OI.stick.getRawAxis(1) * drivePrefix, OI.stick.getRawAxis(0) * drivePrefix);
-		} else {
-			driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
+		// The POV
+		if (OI.stick.getPOV() == 0) {
+			drivePrefix = 0.25;
+		} else if (OI.stick.getPOV() == 90) {
+			drivePrefix = 0.5;
+		} else if (OI.stick.getPOV() == 180) {
+			drivePrefix = 0.75;
+		} else if (OI.stick.getPOV() == 270) {
+			drivePrefix = 1;
 		}
+		// ---------------End of button ------------------
+
+		//
+
+		//
 
 		// BEGIN Pneumatic Code
 		// piston stuff
@@ -362,6 +361,7 @@ public class Robot extends IterativeRobot {
 		} else {
 			arms.set(DoubleSolenoid.Value.kReverse);
 		}
+
 		// END Pneumatic Code
 
 	}
@@ -450,61 +450,73 @@ public class Robot extends IterativeRobot {
 		OI.stick.setRumble(RumbleType.kRightRumble, largeRumbleVal);
 	}// end of rumble method
 
-	public void goToAbsAngle () {
-		    double stickX2 = OI.stick.getRawAxis(4);
-	        double stickY2 = OI.stick.getRawAxis(5);
-	        double stickX = OI.stick.getRawAxis(0);
-	        double stickY = OI.stick.getRawAxis(1);
-	        double turnX = 0;
-	        double turnY = 0;
-	        boolean turningAutonomous = false;
-	        if (((Math.abs(stickY2) > 0.5)||(Math.abs(stickX2) > 0.5))&& turningAutonomous == false){
-	        	turningAutonomous = true;
-	        	turnX = stickX2;
-	        	turnY = -stickY2;
-	        }
-	        
-	        if (!(Math.abs(stickY) < 0.4)||!(Math.abs(stickX) < 0.4)){//if user not steering with left stick
-	        	turningAutonomous = false;
-	        }
-	        
-	        if (turningAutonomous){
-	        	double turnAngle = Math.atan2(turnX,turnY);//fix the thumbstick angle
+	public void drive() {
+		double stickX2 = OI.stick.getRawAxis(4);
+		double stickY2 = OI.stick.getRawAxis(5);
+		double stickX = OI.stick.getRawAxis(0);
+		double stickY = OI.stick.getRawAxis(1);
+		double turnX = 0;
+		double turnY = 0;
+		boolean turningAutonomous = false;
+		if (((Math.abs(stickY2) > 0.5) || (Math.abs(stickX2) > 0.5)) && turningAutonomous == false) {
+			turningAutonomous = true;
+			turnX = stickX2;
+			turnY = -stickY2;
+		}
 
+		if (!(Math.abs(stickY) < 0.4) || !(Math.abs(stickX) < 0.4)) {// if user
+																		// not
+																		// steering
+																		// with
+																		// left
+																		// stick
+			turningAutonomous = false;
+		}
 
-		        
-	        	turnAngle *= 180/Math.PI;//convert to degrees 
-	       	//turnAngle += 180;
-	        	//need to fix the angle 
-	        	if (turnAngle<0){
-	        		turnAngle += 360;
-	        	}
-	        	
-	        	if (Math.abs(turnAngle)>360){
-		        	turnAngle = 0;
-		        }
-	        //	stick.get
-	        	
-	        	double heading = (gyro.getAngle()%360);
-	        	turnAngle = 15.*(Math.round(turnAngle/15));
-	        	if (heading<0){
-	        		heading += 360;
-	        	}
-	        	
-	        	if (Math.abs(heading)>360){
-		        	heading = 0;
-		        }
+		if (turningAutonomous) {
+			double turnAngle = Math.atan2(turnX, turnY);// fix the thumbstick
+														// angle
 
+			turnAngle *= 180 / Math.PI;// convert to degrees
+			// turnAngle += 180;
+			// need to fix the angle
+			if (turnAngle < 0) {
+				turnAngle += 360;
+			}
 
-	        	//turnAngle = stick.getDirectionDegrees();
-	        	
-	            System.out.println( heading +"        , "+turnAngle);
-	            
-	           // System.out.println(turnAngle);
-	            if (!OI.leftStick.get()){
-	            	turningAutonomous =  goToHeading (heading,turnAngle);
-	            }
-	        }
+			if (Math.abs(turnAngle) > 360) {
+				turnAngle = 0;
+			}
+			// stick.get
+
+			double heading = (gyro.getAngle() % 360);
+			turnAngle = 15. * (Math.round(turnAngle / 15));
+			if (heading < 0) {
+				heading += 360;
+			}
+
+			if (Math.abs(heading) > 360) {
+				heading = 0;
+			}
+
+			// turnAngle = stick.getDirectionDegrees();
+
+			System.out.println(heading + "        , " + turnAngle);
+
+			// System.out.println(turnAngle);
+			if (!OI.leftStick.get()) {
+				turningAutonomous = goToHeading(heading, turnAngle);
+			} else {
+				if (!reverseDriveActive) {
+					driveRobot.arcadeDrive(OI.stick.getRawAxis(1) * drivePrefix, OI.stick.getRawAxis(0) * drivePrefix);
+				} else {
+					driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix,
+							-OI.stick.getRawAxis(0) * drivePrefix);
+				}
+
+			}
+
+		}
 
 	}
 }
