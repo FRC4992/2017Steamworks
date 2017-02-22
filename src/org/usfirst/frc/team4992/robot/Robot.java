@@ -46,7 +46,7 @@ public class Robot extends IterativeRobot {
 																					// example
 																					// subsystem
 	public static final Climb objClimb = new Climb();
-	public static final Drive drive = new Drive();
+	public static final Drive driveSub = new Drive();
 	public static final GearLifter gear = new GearLifter();
 	public static OI oi;
 	//
@@ -240,7 +240,7 @@ public class Robot extends IterativeRobot {
 		drive();
 		// comp.stop();
 		// BEGIN Climber Code
-		System.out.println(OI.stick.getPOV());
+		System.out.println("Ultra sonic" + ultra.getRangeInches() );
 		// If both triggers are pressed and climber enabled and climber allowed
 		// backwards
 		// Then drive climber backwards
@@ -505,6 +505,7 @@ public class Robot extends IterativeRobot {
 
 			// System.out.println(turnAngle);
 			if (!OI.leftStick.get()) {
+				System.out.println("Left stick:" + OI.leftStick.get() );
 				turningAutonomous = goToHeading(heading, turnAngle);
 			} else {
 				if (!reverseDriveActive) {

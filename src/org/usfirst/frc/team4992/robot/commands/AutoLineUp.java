@@ -14,7 +14,7 @@ public class AutoLineUp extends Command {
 	
     public AutoLineUp() {
         // Use requires() here to declare subsystem dependencies
-        requires(Robot.drive);
+        requires(Robot.driveSub);
     }
 
     // Called just before this Command runs the first time

@@ -19,10 +19,10 @@ public class RobotMap {
 		//Climb
 		climberGear = 40,//CANtalon
 		//Gear
-		solenoidForwardArms = 0,//Solenoid
-		solenoidReverseArms = 1,//Solenoid
-		solenoidPlatformForwards = 2,//Solenoid
-		solenoidPlatformReverse =3,//Solenoid
+		solenoidForwardArms = 2,//Solenoid
+		solenoidReverseArms = 3,//Solenoid
+		solenoidPlatformForwards = 0,//Solenoid
+		solenoidPlatformReverse =1,//Solenoid
 		kicker = 10,//Not sure yet
 	
 		xBoxContorllerPort = 0;
