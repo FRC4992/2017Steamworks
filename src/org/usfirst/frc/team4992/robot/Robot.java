@@ -212,6 +212,85 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void autonomousPeriodic() {
+		
+		switch(autoSteps){
+		//The negative cases is used to get the robot close to the peg depending where it start
+		case -3://Left side
+			
+			break;
+		case -2://middle
+			
+			break;
+		case -1://Right side
+			
+			break;
+		//The generic automus stuff 
+		case 0://vision move toward
+			double leftPower = 0.0;
+			double rightPower = 0.0;
+			double maxTurnSpeed = 0.2;
+			
+				if(visionAvailable){//checks to see if vision is available
+					COG_X = visionTable.getNumber("COG_X", 0.0);
+					
+					if (Robot.COG_X > Robot.ImageWidth / 4) {//turn to the right 
+						leftPower = maxTurnSpeed;
+					} else if (Robot.COG_X < Robot.ImageWidth / 4) {//turn to the left
+						rightPower = maxTurnSpeed;
+					}
+					driveRobot.arcadeDrive(0.4, rightPower - leftPower);
+					System.out.println("COGX:" + COG_X);
+					System.out.println("Half of image widht:" + ImageWidth / 4);
+					leftPower = 0.0;
+					leftPower = 0.0;
+					if(ultra.getRangeInches() < 50 ){
+						autoSteps++;
+					}
+				} else {
+					autoSteps = 404;
+				}
+			
+			break;
+		case 1://
+			plateOn = !plateOn;
+			Timer.delay(0.75);
+			armsOn = !armsOn;
+			Timer.delay(0.75);
+			autoSteps  ++;
+			if (plateOn) {
+				plate.set(DoubleSolenoid.Value.kForward);
+			} else {
+				plate.set(DoubleSolenoid.Value.kReverse);
+			}
+
+			if (armsOn) {
+				arms.set(DoubleSolenoid.Value.kForward);
+			} else {
+				arms.set(DoubleSolenoid.Value.kReverse);
+			}
+					
+			break;
+		case 2://back off
+			driveRobot.arcadeDrive(-0.6, 0);
+			Timer.delay(1.5);
+			driveRobot.arcadeDrive(0, 0);
+			autoSteps = 4992;
+			break;
+		case 404:
+			System.out.println("Vision not available");
+			break;
+		case 4992:
+			goToHeading (0, 0.5);
+			driveRobot.arcadeDrive(0, 0);
+			
+			
+		default:
+			
+			break;
+		
+		}
+		
+		
 		// if in middle position. drive straight until ultrasonic picks up a
 		// certain distance
 		// if in side positions, place against wall and:
@@ -376,8 +455,10 @@ public class Robot extends IterativeRobot {
 
 		// END Pneumatic Code
 
-	}
+	}//end of teleoperation periodic
 
+	
+	
 	// -------------Other non FRC provided methods-------------------------
 	public static boolean goToHeading(double target, double speed) {
 
