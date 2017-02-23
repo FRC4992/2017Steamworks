@@ -10,7 +10,7 @@ import org.usfirst.frc.team4992.robot.Robot;
 public class OperatorControled extends Command {
 
     public OperatorControled() {
-    	requires(Robot.driveSub);
+    	requires(Robot.drive);
     	requires(Robot.objClimb);
     	requires(Robot.gear);
     }

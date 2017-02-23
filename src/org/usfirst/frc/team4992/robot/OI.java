@@ -15,6 +15,8 @@ public class OI {
 	public static JoystickButton buttonY = new JoystickButton(stick, 4); //SURE ABOUT THE NUMBER
 	public static JoystickButton buttonA = new JoystickButton(stick, 1); //SURE ABOUT THE NUMBER
 	public static JoystickButton buttonB = new JoystickButton(stick, 2); //SURE ABOUT THE NUMBER
+	public static JoystickButton startLeftButton = new JoystickButton(stick, 7);
+	public static JoystickButton startRightButton = new JoystickButton(stick, 8);
 	public static JoystickButton leftBumper = new JoystickButton(stick, 5);
 	public static JoystickButton rightBumper = new JoystickButton(stick, 6);
 	public static JoystickButton leftStick = new JoystickButton(stick, 10);
