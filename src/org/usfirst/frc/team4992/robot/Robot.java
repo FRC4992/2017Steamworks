@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.command.*;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.usfirst.frc.team4992.robot.commands.AutoLineUp;
 import org.usfirst.frc.team4992.robot.commands.Climber;
@@ -200,7 +201,8 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void autonomousInit() {
-		autoSteps = 0;
+		autoSteps = 4992;
+		autoSteps = (int) SmartDashboard.getNumber("autoMode", 0 );
 		if (visionAvailable) {
 			COG_X = visionTable.getNumber("COG_X", 0.0);
 			COG_Y = visionTable.getNumber("COG_Y", 0.0);
@@ -226,7 +228,7 @@ public class Robot extends IterativeRobot {
 			break;
 		case -2:// middle
 			driveToDist(2.4, gyro.getAngle());
-			while (ultra.getRangeInches() > 25) {// Keeps turning until the
+			while (ultra.getRangeInches() > 50) {// Keeps turning until the
 													// robot sees the tape
 				driveRobot.arcadeDrive(0.2, 0.0);
 			}
@@ -296,7 +298,8 @@ public class Robot extends IterativeRobot {
 			System.out.println("Vision not available");
 			break;
 		case 4992:
-
+			driveToDist(4,0.6);
+			autoSteps = 3; //Lines up and stopsss
 			break;
 		default:
 
