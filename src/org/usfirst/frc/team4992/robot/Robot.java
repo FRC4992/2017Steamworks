@@ -88,7 +88,10 @@ public class Robot extends IterativeRobot {
 	public boolean xButton = false;
 	public boolean yButton = false;
 	public boolean startButtons = false;
-	int autoSteps;
+	static double  leftPower = 0.0;
+	double rightPower = 0.0;
+	static double maxTurnSpeed = 0.2;
+	static int autoSteps;
 	int ticks = 0;
 	boolean run = true;
 
@@ -289,7 +292,6 @@ public class Robot extends IterativeRobot {
 			arms.set(DoubleSolenoid.Value.kForward);
 			Timer.delay(0.75);
 			autoSteps++;
-
 			break;
 		case 2:// back off and close arms
 			driveRobot.arcadeDrive(-0.6, 0);
@@ -410,12 +412,10 @@ public class Robot extends IterativeRobot {
 
 		// -----------------Start of Buttom----------------------------
 		// A button (reverse drive)
-		if (OI.buttonA.get() && !aButton) {
+		if (OI.buttonA.get()) {
 			System.out.println("A");
 			if (visionAvailable) {// checks to see if vision is available
-				double leftPower = 0.0;
-				double rightPower = 0.0;
-				double maxTurnSpeed = 0.2;
+
 				COG_X = visionTable.getNumber("COG_X", 0.0);
 				System.out.println("COCOCOCOCOCOCOCO" +COG_X);
 				if (Robot.COG_X > Robot.ImageWidth / 4) {// turn to the right
@@ -426,7 +426,7 @@ public class Robot extends IterativeRobot {
 				}
 				driveRobot.arcadeDrive(0.4, rightPower - leftPower);
 				System.out.println("COGX:" + COG_X);
-				System.out.println("Half of image widht:" + ImageWidth / 4);
+				System.out.println("Half of image widht:" + ImageWidth / 4);s
 				leftPower = 0.0;
 				leftPower = 0.0;
 				if (ultra.getRangeInches() < 15) {
@@ -435,9 +435,7 @@ public class Robot extends IterativeRobot {
 			
 			aButton = true;
 			}
-		} else if (!OI.buttonA.get()) {
-			aButton = false;
-		}
+		} 
 		// b Button (resever drive)
 		if (OI.buttonB.get() && !bButton) {
 			System.out.println("B");
