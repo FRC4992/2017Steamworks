@@ -27,7 +27,7 @@ public class RobotMap {
 	
 		xBoxContorllerPort = 0;
 		
-	public static double currentThreshHold = 30;
+	public static double currentThreshHold = 45;
 	
 
 	
