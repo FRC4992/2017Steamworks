@@ -519,7 +519,7 @@ public class Robot extends IterativeRobot {
 		}
 
 		// -----------------Start of Buttom----------------------------
-<<<<<<< HEAD
+/*<<<<<<< HEAD
 		// A button (Tele assited for the gear on to the peg)
 		if (OI.buttonA.get()) {
 			//**myterious self aware bug(only happened once)
@@ -530,13 +530,14 @@ public class Robot extends IterativeRobot {
 				double maxTurnSpeed = 0.2;
 				COG_X = visionTable.getNumber("COG_X", 0.0);//read form network table
 =======
+*/
 		// A button (reverse drive)
 		if (OI.buttonA.get()) {
 			System.out.println("A");
 			if (visionAvailable) {// checks to see if vision is available
 
 				COG_X = visionTable.getNumber("COG_X", 0.0);
->>>>>>> origin/master
+//>>>>>>> origin/master
 				System.out.println("COCOCOCOCOCOCOCO" +COG_X);
 				if (Robot.COG_X > Robot.ImageWidth / 4) {// turn to the right
 					leftPower = maxTurnSpeed;
@@ -545,13 +546,13 @@ public class Robot extends IterativeRobot {
 				}//if - else if for finding the right or left turn
 				driveRobot.arcadeDrive(0.4, rightPower - leftPower);//Drive the robot with aproperet turn
 				System.out.println("COGX:" + COG_X);
-<<<<<<< HEAD
+//<<<<<<< HEAD
 				System.out.println("Half of image widht:" + ImageWidth / 4);
 			}//if vision is availble
 		}//end of a button pressed
 		
 		
-=======
+/*=======
 				System.out.println("Half of image widht:" + ImageWidth / 4);s
 				leftPower = 0.0;
 				leftPower = 0.0;
@@ -562,7 +563,7 @@ public class Robot extends IterativeRobot {
 			aButton = true;
 			}
 		} 
->>>>>>> origin/master
+*///>>>>>>> origin/master
 		// b Button (resever drive)
 		if (OI.buttonB.get() && !bButton) {
 			System.out.println("B");
