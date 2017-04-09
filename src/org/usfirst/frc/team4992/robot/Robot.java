@@ -2,9 +2,9 @@
 package org.usfirst.frc.team4992.robot;
 
 import edu.wpi.cscore.MjpegServer;
-import edu.wpi.cscore.UsbCamera;
+//import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
-import edu.wpi.first.wpilibj.CameraServer;
+//import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -17,17 +17,6 @@ import edu.wpi.first.wpilibj.Ultrasonic;
 import edu.wpi.first.wpilibj.command.*;
 import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
-//writing to a text file imports(not use at the current moment
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 import org.usfirst.frc.team4992.robot.subsystems.Climb;
 import org.usfirst.frc.team4992.robot.subsystems.Drive;
@@ -60,14 +49,16 @@ public class Robot extends IterativeRobot {
 	//
 	public static final int ImageWidth = 320;
 	protected static final int ImageHeight = 240;
+	private static final double INIT_DIST = 2.5;
+	private static final double PEG_DIST = 16;
 	//
 	static ADXRS450_Gyro gyro;
 	Ultrasonic ultra;
 	// senors and random stuff
 	Command autonomousCommand;
-	UsbCamera camera;
-	UsbCamera secondCamera;
-	NetworkTable visionTable;
+	//UsbCamera camera;
+	//UsbCamera secondCamera;
+	//NetworkTable visionTable;
 	Compressor comp;
 	public static double COG_X;
 	double COG_Y;
@@ -122,6 +113,12 @@ public class Robot extends IterativeRobot {
 	static boolean DEBUG_DRIVE = false;
 	static boolean DEBUG_CLIMBER = true;
 	
+	int[] ultraSmooth = new int[5];
+	
+	boolean dropGear;
+	double pos;
+	
+	
 	//Print to text file
 	
 	
@@ -172,27 +169,27 @@ public class Robot extends IterativeRobot {
 		reverseDriveActive = false;
 
 		// Camera setup for vision
-		camera = CameraServer.getInstance().startAutomaticCapture();
-		secondCamera = CameraServer.getInstance().startAutomaticCapture("cam1", 1);
-		MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(), 1181);
+		//camera = CameraServer.getInstance().startAutomaticCapture();
+		//MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(), 1181);
 		visionAvailable = true;
-		try {
-			visionTable = NetworkTable.getTable("RoboRealm");
-		} catch (Exception e) {
-			System.out.println("Cannot Connect to RoboRealm");
-			visionAvailable = false;
-		}
+
 		ultra = new Ultrasonic(1, 2);
 		ultra.setAutomaticMode(true);
 
 	}
 
 	public void testInit() {
+		System.out.println("Up date done ready to tell");
 		motorRightBack.setEncPosition(0);
 		
 	}
 
 	public void testPeriodic() {
+		System.out.println( "inches:" + ultra.getRangeInches() + "\t MM:" + ultra.getRangeMM() );
+		driveToDist(5, gyro.getAngle() );
+		
+		Timer.delay(100);
+		/*
 		motorRightBack.setEncPosition(0);
 		driveToDist(-2, gyro.getAngle() );
 		Timer.delay(5);
@@ -230,6 +227,7 @@ public class Robot extends IterativeRobot {
 			Timer.delay(500);
 			Robot.driveRobot.arcadeDrive(0, 0);
 		}
+		*/
 		
 		//Reverse the climber motor
 		// Climber motor contorls
@@ -247,13 +245,17 @@ public class Robot extends IterativeRobot {
 		
 		
 		//DO NOT DROP THE GEAR IN AUTOMUS (true = drop , false = do not drop)
-		continueToDropGear = false;
+		
 		run = true;
+		/*
 		comp.setClosedLoopControl(true);
 		NetworkTable table = NetworkTable.getTable("Preferences");
 		motorRightBack.setEncPosition(0);
-		autoSteps = (int) (table.getNumber("autoMode",4992));
-		autoSteps -= 2;
+		autoSteps = (int) (table.getNumber("Case",4992));
+		dropGear = table.getBoolean("dropGear",false);
+		pos = table.getNumber("pos", 0);
+		
+		//autoSteps -= 2;
 		System.out.println("The sendable choser over the network tables " + autoSteps);
 		//gyro.calibrate();
 		//gyro.reset();
@@ -266,11 +268,21 @@ public class Robot extends IterativeRobot {
 			System.out.println("COG X:" + COG_X + "\tCOG Y" + COG_Y + "\tCOG SIZE" + COG_SIZE);
 		}
 		
-		
+		//setup ultraSmooth
+		for(int i = 0; i < 5; i ++){
+			//ultraSmooth[i] = ultra.getRangeInches();
+		}
+		*/
 		
 	}
 
 	public void autonomousPeriodic() {
+		if(run){
+			driveToDist(1.5, gyro.getAngle() ) ;
+			run=false;
+		}
+		driveRobot.arcadeDrive(0.0, 0.0);
+		//double de
 		/*
 		//Get to the line
 		if(run){
@@ -279,8 +291,16 @@ public class Robot extends IterativeRobot {
 		}
 		*/
 		//driveRobot.arcadeDrive(-0.5, 0.0);
+		//System.out.println(autoSteps);
 		
-		switch (autoSteps) {
+		//double tempWait = 0.25;
+		
+		//System.out.println(autoSteps);
+		
+		/*
+		switch (autoSteps) {		
+						
+		
 		
 		//Bugs - Randomly drops gear(Done)
 				//Stops for 5 seconds(Ish)
@@ -372,6 +392,7 @@ public class Robot extends IterativeRobot {
 			}
 			System.out.println("Switching to case 403 from 3");
 			autoSteps = 403;
+			break;
 		case 403:
 			//System.out.println("Endding");
 			driveRobot.arcadeDrive(0, 0);
@@ -383,20 +404,41 @@ public class Robot extends IterativeRobot {
 		//User input of 420 will try to land the gear without vision
 		
 		case 418://Moves the robot within 20 inches
-			driveToDist(1.8, gyro.getAngle() );
-			while( !(ultra.getRangeInches()<20 ) ){
-				driveRobot.arcadeDrive(0.3, 0.0);
+			driveToDist(0.2, gyro.getAngle() );
+			plate.set(DoubleSolenoid.Value.kForward);
+			System.out.println("Done set up");
+			double rangeDistDebugPrev = ultra.getRangeInches();
+			double rangeDistDebug = ultra.getRangeInches();
+			double rangeDistDebugTemp;
+			long rangeCounter=0;
+			double ultraTol = 0.05;//percnetage
+			System.out.println("HERE:" + ultra.getRangeInches() );
+			while((rangeDistDebug>-1)){
+				
+				rangeDistDebugTemp = ultra.getRangeInches();
+				if( rangeDistDebugTemp < rangeDistDebug-rangeDistDebug*ultraTol || rangeDistDebugTemp > rangeDistDebug+rangeDistDebug*ultraTol) { 
+					rangeCounter++;
+					if (rangeCounter >3) {
+						rangeDistDebug = rangeDistDebugTemp;
+					}
+				}
+				else rangeCounter =0;
+				
+				//rangeDistDebug = ultra.getRangeInches();
+				System.out.println("HERE:" + rangeDistDebug );
+				Timer.delay(0.1);
+				//driveRobot.arcadeDrive(0.3, 0.0);
+				//driveToDist(0.2, gyro.getAngle() );
+
 			}
+			System.out.println("Ready to place");
+			driveRobot.arcadeDrive(0.0, 0.0);
 			goToHeading(0 , 0.5);//Face forwards
 			//418
 			//419
-			driveRobot.arcadeDrive(0,0);
-			plate.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(1);
-			driveRobot.arcadeDrive(0.3,0.0);
-			Timer.delay(0.4);
+			
 			arms.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(1.4);
+			Timer.delay(1);
 			//419
 			//2
 			driveToDist(-0.1, gyro.getAngle());//IF it pulls it off before lifts plate then mod here
@@ -415,6 +457,7 @@ public class Robot extends IterativeRobot {
 			break;
 			
 		case 419:
+			//According to Calvin: this drops the gear
 			driveRobot.arcadeDrive(0,0);
 			plate.set(DoubleSolenoid.Value.kForward);
 			Timer.delay(1);
@@ -424,7 +467,21 @@ public class Robot extends IterativeRobot {
 			Timer.delay(1.4);
 			autoSteps = 2;//2 will back off and pull in arms then move to 3 and stop it
 			break;
+			//CHERE
+		case 2000:
+
+			while( ultra.getRangeInches() > 50 ){
+				driveRobot.arcadeDrive(0.5, 0);
+			}
+			System.out.println("Left the drive striaght with:" + ultra.getRangeInches());
+			autoSteps++;
+			break;
 			
+		case 2001:
+			while ( !(ultra.getRangeInches() < 30 ) ){
+				
+			}
+			break;
 		case 4992://Drives striangth
 			driveToDist(3,0.4);
 			if(continueToDropGear){//If it is going for the straight
@@ -433,11 +490,94 @@ public class Robot extends IterativeRobot {
 				autoSteps = 403;
 			}
 			break;
-		default:
-				
 			
+		case 600://drives straight 
+			
+			driveToDist (INIT_DIST, gyro.getAngle());
+			if   (!dropGear){
+				autoSteps = 606;
+				break;
+			}
+			if (pos == 0){
+				autoSteps = 602;
+				break;
+			}
+			else{
+				Timer.delay(tempWait);
+				autoSteps++;
+				break;
+			}
+			
+			
+		case 601://Turns 
+			double turnAngle = 52;
+			turnAngle = pos*-52;//Turns to the direction you sendd in
+			while (goToHeading(turnAngle, 0.4)){
+				Timer.delay(0.001);
+				System.out.println("Turning...");
+			}
+			
+			Timer.delay(0.001);
+			autoSteps++;
+			Timer.delay(tempWait);
+			break;
+		case 602://Lines up with peg
+			double dist = ultra.getRangeInches();
+			boolean atPeg = dist<PEG_DIST;
+			if (!atPeg){//If not at peg drive straight
+				driveRobot.arcadeDrive(0.45, 0);
+				break;
+			}
+			
+			else if (atPeg){
+				Timer.delay(tempWait);
+				autoSteps++;
+				break;
+			}
 		
-		}
+		case 603:
+			//According to Calvin: this drops the gear
+			if (dropGear){
+				driveRobot.arcadeDrive(0,0);
+				plate.set(DoubleSolenoid.Value.kForward);
+				Timer.delay(0.5);
+				driveRobot.arcadeDrive(0.3,0.0);
+				Timer.delay(0.5);
+				arms.set(DoubleSolenoid.Value.kForward);
+				Timer.delay(0.5);
+			}
+			
+			autoSteps++;
+			Timer.delay(tempWait);
+			break;
+		case 604://retract Gear
+			driveToDist(-0.5, gyro.getAngle());
+			Timer.delay(0.5);//added after 1.0
+			plate.set(DoubleSolenoid.Value.kReverse);
+			Timer.delay(2);//mod after 1.0
+			arms.set(DoubleSolenoid.Value.kReverse); 
+			autoSteps++;
+			Timer.delay(tempWait);
+			break;
+		case 605:
+			driveRobot.arcadeDrive(0, 0);
+		//	while (goToHeading(0, 0.4)) {
+		//		Timer.delay(1 / 1000);
+		//	}
+			autoSteps++;
+			Timer.delay(tempWait);
+			break;
+			
+		case 606:
+			driveRobot.arcadeDrive(0, 0);
+			break;
+			
+
+		
+		
+
+		
+		}*/
 			//System.out.println("Here ");
 		// if in middle position. drive straight until ultrasonic picks up a
 		// certain distance
@@ -534,10 +674,10 @@ public class Robot extends IterativeRobot {
 		// A button (reverse drive)
 		if (OI.buttonA.get()) {
 			System.out.println("A");
+			/*
 			if (visionAvailable) {// checks to see if vision is available
 
-				COG_X = visionTable.getNumber("COG_X", 0.0);
-//>>>>>>> origin/master
+				
 				System.out.println("COCOCOCOCOCOCOCO" +COG_X);
 				if (Robot.COG_X > Robot.ImageWidth / 4) {// turn to the right
 					leftPower = maxTurnSpeed;
@@ -549,7 +689,9 @@ public class Robot extends IterativeRobot {
 //<<<<<<< HEAD
 				System.out.println("Half of image widht:" + ImageWidth / 4);
 			}//if vision is availble
+			*/
 		}//end of a button pressed
+				
 		
 		
 /*=======
@@ -610,14 +752,14 @@ public class Robot extends IterativeRobot {
 		*/
 
 		// The POV
-		if (OI.stick.getPOV() == 180) {
+		if (OI.stick.getPOV() == 180) {//down
 			drivePrefix = 0.5;
-		} else if (OI.stick.getPOV() == 90) {
-			drivePrefix = 0.65;
-		} else if (OI.stick.getPOV() == 0) {
-			drivePrefix = 0.8;
-		} else if (OI.stick.getPOV() == 270) {
+		} else if (OI.stick.getPOV() == 90) {//right
+			drivePrefix = 0.7;
+		} else if (OI.stick.getPOV() == 0) {//up
 			drivePrefix = 1;
+		} else if (OI.stick.getPOV() == 270) {//left
+			drivePrefix = 0.7;
 		
 	}//end of if for POV stick-unless(will modifications)
 		if (reverseDriveActive) {
@@ -652,8 +794,11 @@ public class Robot extends IterativeRobot {
 
 	// -------------Other non FRC provided methods-------------------------
 	public static boolean goToHeading(double target, double speed) {
-
-		int hedge = 10;// amount of degrees to stop short of turning
+		
+		if(OI.buttonA.get() )
+			return false;
+		
+		int hedge = 5;// amount of degrees to stop short of turning
 		double heading = (gyro.getAngle() % 360);// Makes sure the gyro has an
 													// angle between 0-360
 		if (heading < 0) {
@@ -709,18 +854,18 @@ public class Robot extends IterativeRobot {
 	}// end of switchReverseDrive method
 
 	public void driveToDist(double meters, double initHeading) {
-		double angleThresh = 5;
+		double angleThresh = 3;
 		motorRightBack.setEncPosition(0);
 		ticks = 0;
 		double angle = (gyro.getAngle());
 		double rotations = Math.abs(meters * 2.0833);
 		if (meters > 0) {
-			while (ticks < 1440 * rotations) {
+			while (ticks < 1440 * rotations && !OI.buttonA.get() ) {
 				
 				ticks = -motorRightBack.getEncPosition();
 				// Lines robot back up to where it started, if it veers off
 				if (gyro.getAngle() > (angleThresh + angle) || gyro.getAngle() < (angle - angleThresh)) {
-					while (goToHeading(initHeading, 0.4)) {
+					while (goToHeading(initHeading, 0.4)   ) {
 
 					}
 				}
@@ -728,9 +873,9 @@ public class Robot extends IterativeRobot {
 				//System.out.println("Postive ticks" + ticks);
 			} // end of first while
 		} else {
-			while (ticks < 1440 * rotations) {
+			while (ticks < 1440 * rotations && !OI.buttonA.get()) {
 				ticks = motorRightBack.getEncPosition();
-				System.out.println( "ticks " + ticks);
+				//System.out.println( "ticks " + ticks);
 				driveRobot.arcadeDrive(-0.5, 0);
 				if (gyro.getAngle() > (angleThresh + angle) || gyro.getAngle() < (angle - angleThresh)) {
 					while (goToHeading(initHeading, 0.4)) {
