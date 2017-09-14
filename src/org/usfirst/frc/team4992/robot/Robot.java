@@ -116,6 +116,10 @@ public class Robot extends IterativeRobot {
 	int[] ultraSmooth = new int[5];
 	
 	boolean dropGear;
+	boolean goSlow;
+	
+	
+	
 	double pos;
 	
 	
@@ -179,6 +183,7 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void testInit() {
+		
 		System.out.println("Up date done ready to tell");
 		motorRightBack.setEncPosition(0);
 		
@@ -249,10 +254,9 @@ public class Robot extends IterativeRobot {
 		run = true;
 		/*
 		comp.setClosedLoopControl(true);
-		NetworkTable table = NetworkTable.getTable("Preferences");
 		motorRightBack.setEncPosition(0);
 		autoSteps = (int) (table.getNumber("Case",4992));
-		dropGear = table.getBoolean("dropGear",false);
+		
 		pos = table.getNumber("pos", 0);
 		
 		//autoSteps -= 2;
@@ -277,11 +281,30 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void autonomousPeriodic() {
+		
+		
 		if(run){
-			driveToDist(1.5, gyro.getAngle() ) ;
+			/*motorLeftBack.setSafetyEnabled(false);
+			motorLeftFront.setSafetyEnabled(false);
+			motorRightFront.setSafetyEnabled(false);
+			motorRightBack.setSafetyEnabled(false);
+			//*/
+			//driveToDist(1.5, gyro.getAngle() ) ;
+			driveRobot.setSafetyEnabled(false);
+			driveRobot.arcadeDrive(0.4, 0.0);
+			Timer.delay(2.0);
+			//driveRobot.arcadeDrive(0.0, 0.0);
 			run=false;
 		}
-		driveRobot.arcadeDrive(0.0, 0.0);
+		driveRobot.setSafetyEnabled(true);
+		
+		/*
+		motorLeftBack.setSafetyEnabled(true);
+		motorLeftFront.setSafetyEnabled(true);
+		motorRightFront.setSafetyEnabled(true);
+		motorRightBack.setSafetyEnabled(true);
+		//*/
+		//driveRobot.arcadeDrive(0.0, 0.0);
 		//double de
 		/*
 		//Get to the line
@@ -597,6 +620,9 @@ public class Robot extends IterativeRobot {
 		maxClimberCurrent = 0;
 		climberEnable = true;
 		allowClimberDown = false;
+		NetworkTable table = NetworkTable.getTable("Preferences");
+		goSlow = table.getBoolean("goSlow",false);
+
 
 	}
 
@@ -751,17 +777,30 @@ public class Robot extends IterativeRobot {
 		}
 		*/
 
+	
 		// The POV
+	
+		double slowPrefix;
+		System.out.println(goSlow);
+		if (goSlow){
+			slowPrefix = 2;
+		}
+		else{
+			slowPrefix = 1;
+		}
 		if (OI.stick.getPOV() == 180) {//down
 			drivePrefix = 0.5;
 		} else if (OI.stick.getPOV() == 90) {//right
-			drivePrefix = 0.7;
+			drivePrefix = 0.7/slowPrefix;
 		} else if (OI.stick.getPOV() == 0) {//up
-			drivePrefix = 1;
+			drivePrefix = 1/slowPrefix;
 		} else if (OI.stick.getPOV() == 270) {//left
-			drivePrefix = 0.7;
+			drivePrefix = 0.7/slowPrefix;
+		}
+
+	
 		
-	}//end of if for POV stick-unless(will modifications)
+	//end of if for POV stick-unless(will modifications)
 		if (reverseDriveActive) {
 			drivePrefix = -Math.abs(drivePrefix);
 		} else {
