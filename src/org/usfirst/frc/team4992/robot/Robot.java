@@ -2,8 +2,10 @@
 package org.usfirst.frc.team4992.robot;
 
 import edu.wpi.cscore.MjpegServer;
+import edu.wpi.cscore.UsbCamera;
 //import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.CameraServer;
 //import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -42,9 +44,6 @@ public class Robot extends IterativeRobot {
 																					// the
 																					// example
 																					// subsystem
-	public static final Climb objClimb = new Climb();
-	public static final Drive drive = new Drive();
-	public static final GearLifter gear = new GearLifter();
 	public static OI oi;
 	//
 	public static final int ImageWidth = 320;
@@ -56,8 +55,8 @@ public class Robot extends IterativeRobot {
 	Ultrasonic ultra;
 	// senors and random stuff
 	Command autonomousCommand;
-	//UsbCamera camera;
-	//UsbCamera secondCamera;
+	UsbCamera camera;
+	UsbCamera secondCamera;
 	//NetworkTable visionTable;
 	Compressor comp;
 	public static double COG_X;
@@ -66,7 +65,6 @@ public class Robot extends IterativeRobot {
 	double COG_SIZEThresh;
 	boolean visionAvailable;
 
-	// Motor OI.sticks
 	CANTalon motorLeftBack;
 	CANTalon motorRightBack;
 	CANTalon motorLeftFront;
@@ -100,51 +98,21 @@ public class Robot extends IterativeRobot {
 	public static DoubleSolenoid plate;
 	boolean plateOn = false;
 	// NetworkTable visionTable;
-
 	boolean leftStick = false;
-
 	// Variables and constants to control the climber
 	double maxClimberCurrent = 0;
 	double[] climberCurrent = {0.0,0.0,0.0};
 	boolean climberEnable = false;
 	boolean allowClimberDown = true;
-
 	// Debug Statement control
 	static boolean DEBUG_DRIVE = false;
 	static boolean DEBUG_CLIMBER = true;
-	
 	int[] ultraSmooth = new int[5];
-	
 	boolean dropGear;
 	boolean goSlow;
-	
-	
-	
 	double pos;
-	
-	
-	//Print to text file
-	
-	
-	//File file = new File("C:/Users/4992/Desktop/log.txt");
-	//  PrintWriter basicWrite;
-	
-	//FileWriter logger = new FileWriter (file.getAbsoluteFile());
-	/*
-	File fileSecond = new File("log.txt");
-	FileOutputStream stream = new FileOutputStream ( file );
-	*/
-	
-
 	// ------------------------FRC methods-------------------------
 	public void robotInit(){
-		/*
-		try{
-			basicWrite = new PrintWriter( file );
-		} catch(Exception e){
-			
-		}
-		*/
 		
 		gyro = new ADXRS450_Gyro();
 		gyro.calibrate();
@@ -168,13 +136,12 @@ public class Robot extends IterativeRobot {
 		motorLeftFrontTest = new Jaguar(3);
 		motorRightFrontTest = new Jaguar(4);
 		driveRobotTest = new RobotDrive(motorLeftFrontTest, motorLeftBackTest, motorRightFrontTest, motorRightBackTest);
-		// motorLeftBackTest= new Ja
 		// driveTestBot
 		reverseDriveActive = false;
 
 		// Camera setup for vision
-		//camera = CameraServer.getInstance().startAutomaticCapture();
-		//MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(), 1181);
+		camera = CameraServer.getInstance().startAutomaticCapture();
+		MjpegServer server = new MjpegServer(CameraServer.getInstance().toString(), 1181);
 		visionAvailable = true;
 
 		ultra = new Ultrasonic(1, 2);
@@ -190,50 +157,6 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void testPeriodic() {
-		System.out.println( "inches:" + ultra.getRangeInches() + "\t MM:" + ultra.getRangeMM() );
-		driveToDist(5, gyro.getAngle() );
-		
-		Timer.delay(100);
-		/*
-		motorRightBack.setEncPosition(0);
-		driveToDist(-2, gyro.getAngle() );
-		Timer.delay(5);
-		
-		System.out.println( motorRightBack.getEncPosition() );
-		
-		ultra.getRangeInches();
-		double leftPower = 0.0;
-		double rightPower = 0.0;
-		while (OI.buttonA.get() && visionAvailable) {
-			COG_X = visionTable.getNumber("COG_X", 0.0);
-			if (Robot.COG_X > Robot.ImageWidth / 4) {
-				leftPower = 0.2;
-				// leftPower = 0.5 * ( (Robot.ImageHeight/4) /(Robot.COG_X) ) -
-				// 1;
-			} else if (Robot.COG_X < Robot.ImageWidth / 4) {
-				rightPower = 0.2;
-				// rightPower = 0.5 * (1 - (COG_X/ImageWidth) );
-			}
-			driveRobot.arcadeDrive(0.4, rightPower - leftPower);
-			System.out.println("COGX:" + COG_X);
-			System.out.println("Half of image widht:" + ImageWidth / 4);
-			leftPower = 0.0;
-			leftPower = 0.0;
-		}
-		System.out.println("inches" + ultra.getRangeInches());
-		if (ultra.getRangeInches() < 30) {
-			Robot.plate.set(DoubleSolenoid.Value.kReverse);
-			Timer.delay(100);
-			Robot.arms.set(DoubleSolenoid.Value.kReverse);
-			Timer.delay(100);
-			Robot.plate.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(100);
-			Robot.driveRobot.arcadeDrive(-0.5, 0);
-			Timer.delay(500);
-			Robot.driveRobot.arcadeDrive(0, 0);
-		}
-		*/
-		
 		//Reverse the climber motor
 		// Climber motor contorls
 		if (OI.rightBumper.get() && OI.leftBumper.get() ) {
@@ -243,7 +166,6 @@ public class Robot extends IterativeRobot {
 		} else {
 			climberMotor.set(0);
 		}
-
 	}
 
 	public void autonomousInit() {
@@ -252,31 +174,7 @@ public class Robot extends IterativeRobot {
 		//DO NOT DROP THE GEAR IN AUTOMUS (true = drop , false = do not drop)
 		
 		run = true;
-		/*
-		comp.setClosedLoopControl(true);
-		motorRightBack.setEncPosition(0);
-		autoSteps = (int) (table.getNumber("Case",4992));
 		
-		pos = table.getNumber("pos", 0);
-		
-		//autoSteps -= 2;
-		System.out.println("The sendable choser over the network tables " + autoSteps);
-		//gyro.calibrate();
-		//gyro.reset();
-		
-		if (visionAvailable) {
-			COG_X = visionTable.getNumber("COG_X", 0.0);
-			COG_Y = visionTable.getNumber("COG_Y", 0.0);
-			COG_SIZE = visionTable.getNumber("COG_BOX_SIZE", 0.0);
-			COG_SIZEThresh = 100;
-			System.out.println("COG X:" + COG_X + "\tCOG Y" + COG_Y + "\tCOG SIZE" + COG_SIZE);
-		}
-		
-		//setup ultraSmooth
-		for(int i = 0; i < 5; i ++){
-			//ultraSmooth[i] = ultra.getRangeInches();
-		}
-		*/
 		
 	}
 
@@ -284,11 +182,6 @@ public class Robot extends IterativeRobot {
 		
 		
 		if(run){
-			/*motorLeftBack.setSafetyEnabled(false);
-			motorLeftFront.setSafetyEnabled(false);
-			motorRightFront.setSafetyEnabled(false);
-			motorRightBack.setSafetyEnabled(false);
-			//*/
 			//driveToDist(1.5, gyro.getAngle() ) ;
 			driveRobot.setSafetyEnabled(false);
 			driveRobot.arcadeDrive(0.4, 0.0);
@@ -298,316 +191,7 @@ public class Robot extends IterativeRobot {
 		}
 		driveRobot.setSafetyEnabled(true);
 		
-		/*
-		motorLeftBack.setSafetyEnabled(true);
-		motorLeftFront.setSafetyEnabled(true);
-		motorRightFront.setSafetyEnabled(true);
-		motorRightBack.setSafetyEnabled(true);
-		//*/
-		//driveRobot.arcadeDrive(0.0, 0.0);
-		//double de
-		/*
-		//Get to the line
-		if(run){
-			driveToDist( 3.0, gyro.getAngle() );
-			run = false;
-		}
-		*/
-		//driveRobot.arcadeDrive(-0.5, 0.0);
-		//System.out.println(autoSteps);
-		
-		//double tempWait = 0.25;
-		
-		//System.out.println(autoSteps);
-		
-		/*
-		switch (autoSteps) {		
-						
-		
-		
-		//Bugs - Randomly drops gear(Done)
-				//Stops for 5 seconds(Ish)
-				//Super slow(should be fixed)
-		
-		// The negative cases is used to get the robot close to the peg
-		// depending where it start		
-		case -3://For starting on the left side
-			driveToDist(2.9, gyro.getAngle() );//Drives out striaght alittle 
-			goToHeading(60, 0.5);//Trun toward the peg
-			while (COG_X == 0) {// Keeps turning until the robot sees the tape
-				COG_X = visionTable.getNumber("COG_X", 0.0);
-				driveRobot.arcadeDrive(0, 0.3);
-			}//end of while
-			System.out.println("Switching to case 0 from -3");
-			autoSteps = 0;//Swicth to vision case
-			break;
-		case -2://for staring in the middle
-			driveToDist(2, gyro.getAngle());//Currently set to a speed of 0.5 is the driveToDist
-			while (ultra.getRangeInches() > 55) {// Keeps going stright until the robot is close the the airship(ultra sonic)
-				driveRobot.arcadeDrive(0.3, 0.0);//drive slow
-			}//end of while
-			System.out.println("Switching to case 0 from -2");
-			autoSteps = 0;//Set it to the vision 
-			break;
-		case -1://For staring on the right side
-			driveToDist(2.9, gyro.getAngle());//Drives out a bit
-			goToHeading(300, 0.5);//Turn to ward the peg
-			while (COG_X == 0) {// Keeps turning until the robot sees the tape
-				COG_X = visionTable.getNumber("COG_X", 0.0);
-				driveRobot.arcadeDrive(0, -0.3);
-			}//end of while
-			System.out.println("Switching to case 0 from -1");
-			autoSteps = 0;//set to the vison case
-			break;
-			
-		// The generic automus stuff(These(0-3) are called all the  
-		case 0:// vision move toward
-			//resets the varible so that any turning does not carry over
-			double leftPower = 0.0;
-			double rightPower = 0.0;
-			double maxTurnSpeed = 0.2;
-
-			if (visionAvailable) {// checks to see if vision is available
-				COG_X = visionTable.getNumber("COG_X", 0.0);//Updata COG X varible from the network tables
-				if (Robot.COG_X > Robot.ImageWidth / 4) {// turn to the right
-					leftPower = maxTurnSpeed;
-				} else if (Robot.COG_X < Robot.ImageWidth / 4) {// turn to the left
-					rightPower = maxTurnSpeed;
-				}//end of if-else if(desideing turn direction)
-				driveRobot.arcadeDrive(0.4, rightPower - leftPower);//Do the driving with the turing that is desided in the above if-else if statment
-				if (ultra.getRangeInches() < 20) {//If close to airship
-					System.out.println("Switching to case " + (autoSteps++) + " from 0");
-					autoSteps++;
-				}
-			} else {
-				System.out.println("Switching to case 404 from 0");
-				autoSteps = 404;
-			}
-
-			break;
-		case 1://Places the gear on the airship(not tested yet)
-			driveRobot.arcadeDrive(0.3,0);//drive a bit
-			Timer.delay(1/5);
-			driveRobot.arcadeDrive(0,0);//Stop drivin
-			plate.set(DoubleSolenoid.Value.kForward);//push arms forwards
-			Timer.delay(0.75);
-			arms.set(DoubleSolenoid.Value.kForward);//drop gear
-			Timer.delay(0.75);
-			System.out.println("Switching to case 2 from 1");
-			autoSteps++;
-			break;
-		case 2:// back off and close arms
-			driveRobot.arcadeDrive(-0.3, 0.0);//added after 1.0
-			Timer.delay(0.5);//added after 1.0
-			plate.set(DoubleSolenoid.Value.kReverse);
-			driveRobot.arcadeDrive(0.8, 0.0 );
-			Timer.delay(10.2);//mod after 1.0
-			driveRobot.arcadeDrive(-0.5, 0);
-			arms.set(DoubleSolenoid.Value.kReverse); 
-			
-			System.out.println("Switching to case 3 from 2");
-			autoSteps = 3;
-			break;
-		case 3:// Lines up at zero degrees and stop
-			driveRobot.arcadeDrive(0, 0);
-			while (goToHeading(0, 0.5)) {
-				Timer.delay(1 / 1000);
-			}
-			System.out.println("Switching to case 403 from 3");
-			autoSteps = 403;
-			break;
-		case 403:
-			//System.out.println("Endding");
-			driveRobot.arcadeDrive(0, 0);
-			//Add endding of the case switch here
-			break;			
-		case 404:
-			System.out.println("Vision not available");
-			break;
-		//User input of 420 will try to land the gear without vision
-		
-		case 418://Moves the robot within 20 inches
-			driveToDist(0.2, gyro.getAngle() );
-			plate.set(DoubleSolenoid.Value.kForward);
-			System.out.println("Done set up");
-			double rangeDistDebugPrev = ultra.getRangeInches();
-			double rangeDistDebug = ultra.getRangeInches();
-			double rangeDistDebugTemp;
-			long rangeCounter=0;
-			double ultraTol = 0.05;//percnetage
-			System.out.println("HERE:" + ultra.getRangeInches() );
-			while((rangeDistDebug>-1)){
-				
-				rangeDistDebugTemp = ultra.getRangeInches();
-				if( rangeDistDebugTemp < rangeDistDebug-rangeDistDebug*ultraTol || rangeDistDebugTemp > rangeDistDebug+rangeDistDebug*ultraTol) { 
-					rangeCounter++;
-					if (rangeCounter >3) {
-						rangeDistDebug = rangeDistDebugTemp;
-					}
-				}
-				else rangeCounter =0;
-				
-				//rangeDistDebug = ultra.getRangeInches();
-				System.out.println("HERE:" + rangeDistDebug );
-				Timer.delay(0.1);
-				//driveRobot.arcadeDrive(0.3, 0.0);
-				//driveToDist(0.2, gyro.getAngle() );
-
-			}
-			System.out.println("Ready to place");
-			driveRobot.arcadeDrive(0.0, 0.0);
-			goToHeading(0 , 0.5);//Face forwards
-			//418
-			//419
-			
-			arms.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(1);
-			//419
-			//2
-			driveToDist(-0.1, gyro.getAngle());//IF it pulls it off before lifts plate then mod here
-			plate.set(DoubleSolenoid.Value.kReverse);
-			driveToDist(-1, gyro.getAngle());
-			arms.set(DoubleSolenoid.Value.kReverse); 
-			//2
-			//3
-			driveRobot.arcadeDrive(0, 0);
-			while (goToHeading(0, 0.5)) {
-				Timer.delay(1 / 1000);
-			}
-			//3
-			
-			autoSteps = 403;
-			break;
-			
-		case 419:
-			//According to Calvin: this drops the gear
-			driveRobot.arcadeDrive(0,0);
-			plate.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(1);
-			driveRobot.arcadeDrive(0.3,0.0);
-			Timer.delay(0.4);
-			arms.set(DoubleSolenoid.Value.kForward);
-			Timer.delay(1.4);
-			autoSteps = 2;//2 will back off and pull in arms then move to 3 and stop it
-			break;
-			//CHERE
-		case 2000:
-
-			while( ultra.getRangeInches() > 50 ){
-				driveRobot.arcadeDrive(0.5, 0);
-			}
-			System.out.println("Left the drive striaght with:" + ultra.getRangeInches());
-			autoSteps++;
-			break;
-			
-		case 2001:
-			while ( !(ultra.getRangeInches() < 30 ) ){
-				
-			}
-			break;
-		case 4992://Drives striangth
-			driveToDist(3,0.4);
-			if(continueToDropGear){//If it is going for the straight
-				autoSteps = 3;
-			} else{//Just pass the line
-				autoSteps = 403;
-			}
-			break;
-			
-		case 600://drives straight 
-			
-			driveToDist (INIT_DIST, gyro.getAngle());
-			if   (!dropGear){
-				autoSteps = 606;
-				break;
-			}
-			if (pos == 0){
-				autoSteps = 602;
-				break;
-			}
-			else{
-				Timer.delay(tempWait);
-				autoSteps++;
-				break;
-			}
-			
-			
-		case 601://Turns 
-			double turnAngle = 52;
-			turnAngle = pos*-52;//Turns to the direction you sendd in
-			while (goToHeading(turnAngle, 0.4)){
-				Timer.delay(0.001);
-				System.out.println("Turning...");
-			}
-			
-			Timer.delay(0.001);
-			autoSteps++;
-			Timer.delay(tempWait);
-			break;
-		case 602://Lines up with peg
-			double dist = ultra.getRangeInches();
-			boolean atPeg = dist<PEG_DIST;
-			if (!atPeg){//If not at peg drive straight
-				driveRobot.arcadeDrive(0.45, 0);
-				break;
-			}
-			
-			else if (atPeg){
-				Timer.delay(tempWait);
-				autoSteps++;
-				break;
-			}
-		
-		case 603:
-			//According to Calvin: this drops the gear
-			if (dropGear){
-				driveRobot.arcadeDrive(0,0);
-				plate.set(DoubleSolenoid.Value.kForward);
-				Timer.delay(0.5);
-				driveRobot.arcadeDrive(0.3,0.0);
-				Timer.delay(0.5);
-				arms.set(DoubleSolenoid.Value.kForward);
-				Timer.delay(0.5);
-			}
-			
-			autoSteps++;
-			Timer.delay(tempWait);
-			break;
-		case 604://retract Gear
-			driveToDist(-0.5, gyro.getAngle());
-			Timer.delay(0.5);//added after 1.0
-			plate.set(DoubleSolenoid.Value.kReverse);
-			Timer.delay(2);//mod after 1.0
-			arms.set(DoubleSolenoid.Value.kReverse); 
-			autoSteps++;
-			Timer.delay(tempWait);
-			break;
-		case 605:
-			driveRobot.arcadeDrive(0, 0);
-		//	while (goToHeading(0, 0.4)) {
-		//		Timer.delay(1 / 1000);
-		//	}
-			autoSteps++;
-			Timer.delay(tempWait);
-			break;
-			
-		case 606:
-			driveRobot.arcadeDrive(0, 0);
-			break;
-			
-
-		
-		
-
-		
-		}*/
-			//System.out.println("Here ");
-		// if in middle position. drive straight until ultrasonic picks up a
-		// certain distance
-		// if in side positions, place against wall and:
-		// drive forward a set distance
-		// turn to face peg using gyro
-		// drive forward to peg
+	
 	}
 
 	public void teleopInit() {
@@ -627,7 +211,6 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void teleopPeriodic() {
-		TeleOpdrive();
 		//System.out.println(motorRightBack.getEncPosition());
 		
 
@@ -684,54 +267,14 @@ public class Robot extends IterativeRobot {
 					+ motorLeftFront.getEncVelocity());
 		}
 
-		// -----------------Start of Buttom----------------------------
-/*<<<<<<< HEAD
-		// A button (Tele assited for the gear on to the peg)
-		if (OI.buttonA.get()) {
-			//**myterious self aware bug(only happened once)
-			System.out.println("A");
-			if (visionAvailable) {// checks to see if vision is available
-				double leftPower = 0.0;
-				double rightPower = 0.0;
-				double maxTurnSpeed = 0.2;
-				COG_X = visionTable.getNumber("COG_X", 0.0);//read form network table
-=======
-*/
+
 		// A button (reverse drive)
 		if (OI.buttonA.get()) {
 			System.out.println("A");
-			/*
-			if (visionAvailable) {// checks to see if vision is available
-
-				
-				System.out.println("COCOCOCOCOCOCOCO" +COG_X);
-				if (Robot.COG_X > Robot.ImageWidth / 4) {// turn to the right
-					leftPower = maxTurnSpeed;
-				} else if (Robot.COG_X < Robot.ImageWidth / 4) {// turn to the left
-					rightPower = maxTurnSpeed;
-				}//if - else if for finding the right or left turn
-				driveRobot.arcadeDrive(0.4, rightPower - leftPower);//Drive the robot with aproperet turn
-				System.out.println("COGX:" + COG_X);
-//<<<<<<< HEAD
-				System.out.println("Half of image widht:" + ImageWidth / 4);
-			}//if vision is availble
-			*/
+			
 		}//end of a button pressed
 				
 		
-		
-/*=======
-				System.out.println("Half of image widht:" + ImageWidth / 4);s
-				leftPower = 0.0;
-				leftPower = 0.0;
-				if (ultra.getRangeInches() < 15) {
-					autoSteps++;
-				}
-			
-			aButton = true;
-			}
-		} 
-*///>>>>>>> origin/master
 		// b Button (resever drive)
 		if (OI.buttonB.get() && !bButton) {
 			System.out.println("B");
@@ -767,15 +310,6 @@ public class Robot extends IterativeRobot {
 		} else if (!OI.buttonY.get()) {
 			yButton = false;
 		}
-		/*
-		// Start buttons
-		if ((OI.startLeftButton.get() || OI.startRightButton.get()) && !startButtons) {
-			reverseDriveActive = !reverseDriveActive;
-			startButtons = true;
-		} else if (!OI.startLeftButton.get() || !OI.startRightButton.get()) {
-			startButtons = false;
-		}
-		*/
 
 	
 		// The POV
@@ -832,37 +366,6 @@ public class Robot extends IterativeRobot {
 	}// end of teleoperation periodic
 
 	// -------------Other non FRC provided methods-------------------------
-	public static boolean goToHeading(double target, double speed) {
-		
-		if(OI.buttonA.get() )
-			return false;
-		
-		int hedge = 5;// amount of degrees to stop short of turning
-		double heading = (gyro.getAngle() % 360);// Makes sure the gyro has an
-													// angle between 0-360
-		if (heading < 0) {
-			heading += 360;// Adds 360 if angle is negative
-		}
-		if (Math.abs(heading) > 360) {
-			heading = heading % 360;
-		}
-
-		int turn = (int) (target - heading);
-		if (turn > 180) {
-			turn -= 360;
-		} else if (turn < -180) {
-			turn += 360;
-		}
-		if (turn > 0 && turn < 180) {
-			driveRobot.arcadeDrive(0., -speed);
-			// currentDir = -1;
-		} else {
-			driveRobot.arcadeDrive(0., speed);
-		}
-
-		return (Math.abs(turn) >= hedge);
-
-	}
 
 	public boolean switchReverseDrive(boolean currentReverseDriveBooleanValue) {// use
 																				// this
@@ -891,43 +394,40 @@ public class Robot extends IterativeRobot {
 			return true;
 		} // end of if-else
 	}// end of switchReverseDrive method
-
-	public void driveToDist(double meters, double initHeading) {
-		double angleThresh = 3;
-		motorRightBack.setEncPosition(0);
-		ticks = 0;
-		double angle = (gyro.getAngle());
-		double rotations = Math.abs(meters * 2.0833);
-		if (meters > 0) {
-			while (ticks < 1440 * rotations && !OI.buttonA.get() ) {
-				
-				ticks = -motorRightBack.getEncPosition();
-				// Lines robot back up to where it started, if it veers off
-				if (gyro.getAngle() > (angleThresh + angle) || gyro.getAngle() < (angle - angleThresh)) {
-					while (goToHeading(initHeading, 0.4)   ) {
-
-					}
-				}
-				driveRobot.arcadeDrive(0.5, 0);
-				//System.out.println("Postive ticks" + ticks);
-			} // end of first while
+	
+	//turn to given angle (0-360) (still need a "slow down")
+	public void turnToAngle(double absoluteHeading){
+		double roundedGyro = gyro.getAngle();//temp varible for what the modulus value of the gyro
+		//% the gyro reading
+		if(roundedGyro>0){
+			roundedGyro%= 360;
 		} else {
-			while (ticks < 1440 * rotations && !OI.buttonA.get()) {
-				ticks = motorRightBack.getEncPosition();
-				//System.out.println( "ticks " + ticks);
-				driveRobot.arcadeDrive(-0.5, 0);
-				if (gyro.getAngle() > (angleThresh + angle) || gyro.getAngle() < (angle - angleThresh)) {
-					while (goToHeading(initHeading, 0.4)) {
-
-					}
-				}
-				//System.out.println("Negative ticks:" + ticks);
-			} // end of second while
-		} // end of if-else
-		//System.out.println("Done dist");
-		driveRobot.arcadeDrive(0, 0);
-	}// end of driveToDist
-
+			roundedGyro = roundedGyro%360 + 360;
+		}
+		//calcuation which side is better to turn to 
+		double temp = absoluteHeading - roundedGyro;
+		if(temp>-15 && temp<15){
+			driveRobot.arcadeDrive(0,0);//dead zone is + or - 15
+		}else if(temp>0 && temp<180 || temp<-180){
+			driveRobot.arcadeDrive(0, -0.4);//right hopefully
+		} else {
+			driveRobot.arcadeDrive(0, 0.4);//left hopefully
+		}
+		//if you are still confused and read all the comments then ask me I guess
+	}
+	
+	//this funcation take input from joystick (1 to 180,-1 to -180) to normal (0 to 360)
+	public void turnToAngleWithJoyAngle(double absoluteHeading){
+		if(absoluteHeading<0){
+			turnToAngle(absoluteHeading+360);
+		} else {
+			turnToAngle(absoluteHeading);
+		}
+		
+	}
+	
+	
+	
 	// Sets the rumble of the joystick - smallRotateVal is the rumble for the
 	// left side - largeRotateVal is for the right side
 	public void rumbleJoystick(float smallRumbleVal, float largeRumbleVal) {
@@ -935,52 +435,5 @@ public class Robot extends IterativeRobot {
 		OI.stick.setRumble(RumbleType.kRightRumble, largeRumbleVal);
 	}// end of rumble method
 
-	public void TeleOpdrive() {
-		double stickX2 = OI.stick.getRawAxis(4);
-		double stickY2 = OI.stick.getRawAxis(5);
-		double stickX = OI.stick.getRawAxis(0);
-		double stickY = OI.stick.getRawAxis(1);
-		double turnX = 0;
-		double turnY = 0;
-		boolean turningAutonomous = false;
-
-		// If the joystick is being moved past half it will activate
-		if (((Math.abs(stickY2) > 0.5) || (Math.abs(stickX2) > 0.5)) && turningAutonomous == false) {
-			turningAutonomous = true;
-			turnX = stickX2;
-			turnY = -stickY2;
-		} // end of if (joystick is being moved past half it will activate)
-
-		// It will do there automus turning
-		if (turningAutonomous) {
-			double turnAngle = Math.atan2(turnX, turnY);// Get angle witht the
-														// given joystick X and
-														// Y value
-			turnAngle *= 180 / Math.PI;// convert to degrees
-
-			// need to fix the angle
-			if (turnAngle < 0) {
-				turnAngle += 360;
-			}
-			if (Math.abs(turnAngle) > 360) {
-				turnAngle = turnAngle % 360;
-			}
-
-			turnAngle = 15. * (Math.round(turnAngle / 15));
-
-			// turnAngle = stick.getDirectionDegrees();
-
-			System.out.println("Turn angle" + turnAngle);
-			if (!OI.leftStick.get()) {
-				System.out.println("Left stick:" + OI.leftStick.get());
-				turningAutonomous = goToHeading(turnAngle, 0.6);
-			}
-
-		} // end of if(doing the automus turning)
-		if (!turningAutonomous) {
-			driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
-
-		}
-
-	}// end of absult turning method
+	
 }
