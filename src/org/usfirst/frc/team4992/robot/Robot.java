@@ -44,6 +44,9 @@ public class Robot extends IterativeRobot {
 																					// the
 																					// example
 																					// subsystem
+	public static final Climb objClimb = new Climb();
+	public static final Drive drive = new Drive();
+	public static final GearLifter gear = new GearLifter();
 	public static OI oi;
 	//
 	public static final int ImageWidth = 320;
