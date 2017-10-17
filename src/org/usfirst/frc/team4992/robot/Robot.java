@@ -114,6 +114,11 @@ public class Robot extends IterativeRobot {
 	boolean dropGear;
 	boolean goSlow;
 	double pos;
+	//drivestriaght varibles
+	double angleStr =0;
+	double distStr =0;
+	double speedStr =0;
+	boolean readyStr = true;
 	// ------------------------FRC methods-------------------------
 	public void robotInit(){
 		
@@ -157,9 +162,28 @@ public class Robot extends IterativeRobot {
 		System.out.println("Up date done ready to tell");
 		motorRightBack.setEncPosition(0);
 		
+		//driveDist(gyro.getAngle(), 8 , 0.5);
 	}
 
 	public void testPeriodic() {
+		
+		//System.out.println("LB" +motorLeftBack.getEncPosition());
+		//System.out.println("RB" +motorRightBack.getEncPosition());//*
+		//System.out.println("LF" + motorLeftFront.getEncPosition());//*
+		//System.out.println("RF" + motorRightFront.getEncPosition());
+		
+		/*
+		NetworkTable table = NetworkTable.getTable("Preferences");
+		double tempPower = table.getDouble("power",0.0);
+		double tempturn = table.getDouble("turn",0.0);
+		
+		driveRobot.arcadeDrive(-OI.stick.getY(),-OI.stick.getX());
+		
+		if(OI.buttonA.get()){
+			driveRobot.arcadeDrive(tempPower,tempturn);
+		}
+		*/
+		
 		//Reverse the climber motor
 		// Climber motor contorls
 		if (OI.rightBumper.get() && OI.leftBumper.get() ) {
@@ -169,6 +193,13 @@ public class Robot extends IterativeRobot {
 		} else {
 			climberMotor.set(0);
 		}
+		
+		if(OI.startRightButton.get() ){
+			driveDist(gyro.getAngle(),3,0.5);
+		}
+		
+		autoAssitDrive();
+		
 	}
 
 	public void autonomousInit() {
@@ -335,7 +366,7 @@ public class Robot extends IterativeRobot {
 			drivePrefix = 0.7/slowPrefix;
 		}
 
-	
+		
 		
 	//end of if for POV stick-unless(will modifications)
 		if (reverseDriveActive) {
@@ -365,7 +396,10 @@ public class Robot extends IterativeRobot {
 		}
 
 		// END Pneumatic Code
-
+		
+		
+		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
+		
 	}// end of teleoperation periodic
 
 	// -------------Other non FRC provided methods-------------------------
@@ -417,6 +451,35 @@ public class Robot extends IterativeRobot {
 			driveRobot.arcadeDrive(0, 0.4);//left hopefully
 		}
 		//if you are still confused and read all the comments then ask me I guess
+	}
+	
+	public void autoAssitDrive(){
+		System.out.println(readyStr);
+		if(readyStr){
+			driveDist();
+		}
+	}
+	
+	public void driveDist(){
+		//rotations = meters*2.0833; so 2.0833 Roatation = 1 meter
+		//1 r = 1440 ticks
+		System.out.println( (motorRightBack.getEncPosition()/(2.0883*1440) < distStr) + "  " + speedStr);
+		if(motorRightBack.getEncPosition()/(2.0883*1440) < distStr){///Warming might not be right wheel
+			double angleOff= -(angleStr-gyro.getAngle())/20.;
+			driveRobot.arcadeDrive(speedStr,angleOff);//might need to add a constant on second parameter
+			System.out.println("The correction angle:" + angleOff );
+		} else {
+			readyStr = false;
+		}
+	}
+	
+
+	public void driveDist(double inputAngle, double dist, double speed){
+		angleStr = inputAngle;
+		distStr = dist;
+		speedStr = speed;
+		readyStr = true;
+		motorRightBack.setEncPosition(0);
 	}
 	
 	//this funcation take input from joystick (1 to 180,-1 to -180) to normal (0 to 360)
