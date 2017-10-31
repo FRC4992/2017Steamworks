@@ -119,6 +119,9 @@ public class Robot extends IterativeRobot {
 	double distStr =0;
 	double speedStr =0;
 	boolean readyStr = true;
+	
+	double gyroRead1 = 0;
+	double gyroRead2 = 0;
 	// ------------------------FRC methods-------------------------
 	public void robotInit(){
 		
@@ -166,7 +169,21 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void testPeriodic() {
+		if(OI.buttonX.get()){
+			
+			gyro.reset();
+		}
 		
+		if(OI.buttonA.get()){
+			
+			gyro.calibrate();
+		}
+		
+		//System.out.println("\nGyro Reading\n" + (gyro.getAngle()-gyroRead1) + " : " + (gyroRead1-gyroRead2) + " : " + gyro.getAngle() + "\n");
+		
+		gyroRead2 =  gyroRead1;
+		gyroRead1 = gyro.getAngle();
+		//System.out.println(gyro.getAngle() + " space " + gyro.getAngle()%360 );
 		//System.out.println("LB" +motorLeftBack.getEncPosition());
 		//System.out.println("RB" +motorRightBack.getEncPosition());//*
 		//System.out.println("LF" + motorLeftFront.getEncPosition());//*
@@ -195,10 +212,15 @@ public class Robot extends IterativeRobot {
 		}
 		
 		if(OI.startRightButton.get() ){
-			driveDist(gyro.getAngle(),3,0.5);
+			driveDist(gyro.getAngle(),2,0.5);
+			System.out.println("reset" + gyro.getAngle() );
 		}
 		
-		autoAssitDrive();
+		if(OI.buttonY.get()){
+			autoAssitDrive();
+		} else {
+			driveRobot.arcadeDrive(0,0);
+		}
 		
 	}
 
@@ -399,7 +421,6 @@ public class Robot extends IterativeRobot {
 		
 		
 		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
-		
 	}// end of teleoperation periodic
 
 	// -------------Other non FRC provided methods-------------------------
@@ -454,22 +475,28 @@ public class Robot extends IterativeRobot {
 	}
 	
 	public void autoAssitDrive(){
-		System.out.println(readyStr);
+		//System.out.println(readyStr);
 		if(readyStr){
 			driveDist();
-		}
+		} 
 	}
 	
 	public void driveDist(){
 		//rotations = meters*2.0833; so 2.0833 Roatation = 1 meter
 		//1 r = 1440 ticks
-		System.out.println( (motorRightBack.getEncPosition()/(2.0883*1440) < distStr) + "  " + speedStr);
-		if(motorRightBack.getEncPosition()/(2.0883*1440) < distStr){///Warming might not be right wheel
-			double angleOff= -(angleStr-gyro.getAngle())/20.;
+		//System.out.println(motorRightBack.getEncPosition()/(2.0883*1440) + " " + distStr);
+		//System.out.println( (motorRightBack.getEncPosition()/(2.0883*1440) < distStr) + "  " + speedStr);
+		if(Math.abs(motorRightBack.getEncPosition()/(2.0883*1440)) < distStr){///Warming might not be right wheel
+			double angleOff= -(angleStr-gyro.getAngle())/2.0;
+			System.out.println((int)angleStr + " " + ((int)gyro.getAngle())  + "raw:" + angleOff );
+			if(Math.abs(angleOff)>Math.abs(speedStr)/2){
+				angleOff=speedStr*Math.signum(angleOff)/2;
+			}
 			driveRobot.arcadeDrive(speedStr,angleOff);//might need to add a constant on second parameter
-			System.out.println("The correction angle:" + angleOff );
 		} else {
 			readyStr = false;
+			driveRobot.arcadeDrive(0,0);
+			//System.out.println("Done!!!!!!!!");
 		}
 	}
 	
