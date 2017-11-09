@@ -118,10 +118,19 @@ public class Robot extends IterativeRobot {
 	double angleStr =0;
 	double distStr =0;
 	double speedStr =0;
-	boolean readyStr = true;
+	boolean readyStr = false;
+	boolean readyTurn = false;
+	double turnAngle = 0.0;
+	boolean autoInProcess = false;
+	int autoCase = 1;
+	double tableInputAngle =0.0;
 	
 	double gyroRead1 = 0;
 	double gyroRead2 = 0;
+	
+	double testingSC = 0;
+	double testing1172107 = 0;
+	boolean testing1172017button = false;
 	// ------------------------FRC methods-------------------------
 	public void robotInit(){
 		
@@ -169,13 +178,17 @@ public class Robot extends IterativeRobot {
 	}
 
 	public void testPeriodic() {
+		
+		
+		
+		/*
+		//System.out.println(OI.stick.getDirectionDegrees());
+		//turnToAngleWithJoyAngle(OI.stick.getDirectionDegrees() );
 		if(OI.buttonX.get()){
-			
 			gyro.reset();
 		}
 		
 		if(OI.buttonA.get()){
-			
 			gyro.calibrate();
 		}
 		
@@ -189,20 +202,28 @@ public class Robot extends IterativeRobot {
 		//System.out.println("LF" + motorLeftFront.getEncPosition());//*
 		//System.out.println("RF" + motorRightFront.getEncPosition());
 		
-		/*
-		NetworkTable table = NetworkTable.getTable("Preferences");
-		double tempPower = table.getDouble("power",0.0);
-		double tempturn = table.getDouble("turn",0.0);
 		
+		NetworkTable tablea = NetworkTable.getTable("Preferences");
+		testingSC = tablea.getDouble("StrDis", 0.0);
+		double tempPower = tablea.getDouble("power",0.0);
+		double tempturn = tablea.getDouble("turn",0.0);
+		/*
 		driveRobot.arcadeDrive(-OI.stick.getY(),-OI.stick.getX());
 		
 		if(OI.buttonA.get()){
 			driveRobot.arcadeDrive(tempPower,tempturn);
 		}
 		*/
-		
+		/*
 		//Reverse the climber motor
 		// Climber motor contorls
+		
+		
+		if(OI.startRightButton.get() ){
+			driveDist(gyro.getAngle(),testingSC,0.5);
+			//System.out.println("reset" + gyro.getAngle() );
+		}
+		
 		if (OI.rightBumper.get() && OI.leftBumper.get() ) {
 			climberMotor.set(1);
 		} else if (OI.leftBumper.get()) {
@@ -211,17 +232,8 @@ public class Robot extends IterativeRobot {
 			climberMotor.set(0);
 		}
 		
-		if(OI.startRightButton.get() ){
-			driveDist(gyro.getAngle(),2,0.5);
-			System.out.println("reset" + gyro.getAngle() );
-		}
 		
-		if(OI.buttonY.get()){
-			autoAssitDrive();
-		} else {
-			driveRobot.arcadeDrive(0,0);
-		}
-		
+		*/
 	}
 
 	public void autonomousInit() {
@@ -229,24 +241,28 @@ public class Robot extends IterativeRobot {
 		
 		//DO NOT DROP THE GEAR IN AUTOMUS (true = drop , false = do not drop)
 		
-		run = true;
-		
+		NetworkTable table = NetworkTable.getTable("Preferences");
+		tableInputAngle = table.getDouble("TurnAuto",0.0);
 		
 	}
 
 	public void autonomousPeriodic() {
 		
-		
-		if(run){
-			//driveToDist(1.5, gyro.getAngle() ) ;
-			driveRobot.setSafetyEnabled(false);
-			driveRobot.arcadeDrive(0.4, 0.0);
-			Timer.delay(2.0);
-			//driveRobot.arcadeDrive(0.0, 0.0);
-			run=false;
+		autoAssitDrive(false);	
+		if(!readyTurn){
+				if(!autoInProcess){
+					readyStr=true;
+					driveDist(gyro.getAngle(),3.0,0.7);
+					
+					autoInProcess=true;
+				}
+				if(!readyStr&&autoInProcess){
+					turnAngle=tableInputAngle;
+					readyTurn=true;
+					autoCase++;
+				}
+
 		}
-		driveRobot.setSafetyEnabled(true);
-		
 	
 	}
 
@@ -420,7 +436,7 @@ public class Robot extends IterativeRobot {
 		// END Pneumatic Code
 		
 		
-		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
+		driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0));
 	}// end of teleoperation periodic
 
 	// -------------Other non FRC provided methods-------------------------
@@ -455,6 +471,7 @@ public class Robot extends IterativeRobot {
 	
 	//turn to given angle (0-360) (still need a "slow down")
 	public void turnToAngle(double absoluteHeading){
+		double treshHold = 5;
 		double roundedGyro = gyro.getAngle();//temp varible for what the modulus value of the gyro
 		//% the gyro reading
 		if(roundedGyro>0){
@@ -464,8 +481,9 @@ public class Robot extends IterativeRobot {
 		}
 		//calcuation which side is better to turn to 
 		double temp = absoluteHeading - roundedGyro;
-		if(temp>-15 && temp<15){
+		if(temp>-treshHold && temp<treshHold){
 			driveRobot.arcadeDrive(0,0);//dead zone is + or - 15
+			readyTurn=false;
 		}else if(temp>0 && temp<180 || temp<-180){
 			driveRobot.arcadeDrive(0, -0.4);//right hopefully
 		} else {
@@ -474,11 +492,17 @@ public class Robot extends IterativeRobot {
 		//if you are still confused and read all the comments then ask me I guess
 	}
 	
-	public void autoAssitDrive(){
+	public void autoAssitDrive(boolean humanControled){
 		//System.out.println(readyStr);
 		if(readyStr){
 			driveDist();
-		} 
+		}else if(readyTurn){
+			turnToAngleWithJoyAngle(turnAngle);
+		} else if(humanControled){
+			driveRobot.arcadeDrive(-OI.stick.getRawAxis(1) * drivePrefix, -OI.stick.getRawAxis(0) * drivePrefix);
+		} else {
+			driveRobot.arcadeDrive(0.0, 0.0);
+		}
 	}
 	
 	public void driveDist(){
@@ -488,9 +512,24 @@ public class Robot extends IterativeRobot {
 		//System.out.println( (motorRightBack.getEncPosition()/(2.0883*1440) < distStr) + "  " + speedStr);
 		if(Math.abs(motorRightBack.getEncPosition()/(2.0883*1440)) < distStr){///Warming might not be right wheel
 			double angleOff= -(angleStr-gyro.getAngle())/2.0;
-			System.out.println((int)angleStr + " " + ((int)gyro.getAngle())  + "raw:" + angleOff );
-			if(Math.abs(angleOff)>Math.abs(speedStr)/2){
-				angleOff=speedStr*Math.signum(angleOff)/2;
+			//System.out.println((int)angleStr + " " + ((int)gyro.getAngle())  + "raw:" + angleOff );
+			double correctionRate =  2.0;
+			if(Math.abs(angleOff)>30){
+				correctionRate = 0.7;
+				driveRobot.arcadeDrive(0,angleOff/Math.abs(angleOff)* 0.75);
+				return;
+			} else if(Math.abs(angleOff)>10){
+				correctionRate = 1.5;
+				driveRobot.arcadeDrive(0,angleOff/Math.abs(angleOff)* 0.5);
+				return;
+			}
+			
+			if(OI.buttonX.get()){
+				System.out.println(angleOff + " space " + correctionRate);
+			}
+			
+			if(Math.abs(angleOff)>Math.abs(speedStr)/correctionRate){/// div 2
+				angleOff=speedStr*Math.signum(angleOff)/correctionRate;// div 2
 			}
 			driveRobot.arcadeDrive(speedStr,angleOff);//might need to add a constant on second parameter
 		} else {
@@ -512,9 +551,9 @@ public class Robot extends IterativeRobot {
 	//this funcation take input from joystick (1 to 180,-1 to -180) to normal (0 to 360)
 	public void turnToAngleWithJoyAngle(double absoluteHeading){
 		if(absoluteHeading<0){
-			turnToAngle(absoluteHeading+360);
+			turnToAngle((absoluteHeading%360)+360);
 		} else {
-			turnToAngle(absoluteHeading);
+			turnToAngle(absoluteHeading%360);
 		}
 		
 	}
